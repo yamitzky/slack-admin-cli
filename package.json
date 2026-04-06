@@ -1,0 +1,22 @@
+{
+  "name": "sladm",
+  "version": "0.1.0",
+  "type": "module",
+  "bin": {
+    "sladm": "./src/index.ts"
+  },
+  "scripts": {
+    "dev": "bun run src/index.ts",
+    "test": "bun test",
+    "lint": "bunx tsc --noEmit"
+  },
+  "dependencies": {
+    "@optique/core": "latest",
+    "@optique/run": "latest",
+    "@slack/web-api": "latest"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "typescript": "latest"
+  }
+}
