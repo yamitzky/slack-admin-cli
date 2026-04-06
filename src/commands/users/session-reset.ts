@@ -7,11 +7,9 @@ interface SessionResetOptions {
 }
 
 export async function executeSessionReset(client: WebClient, opts: SessionResetOptions) {
-  const params: Record<string, unknown> = {
+  return await client.admin.users.session.reset({
     user_id: opts.userId,
-  };
-  if (opts.mobileOnly !== undefined) params.mobile_only = opts.mobileOnly;
-  if (opts.webOnly !== undefined) params.web_only = opts.webOnly;
-
-  return await client.admin.users.session.reset(params);
+    ...(opts.mobileOnly !== undefined ? { mobile_only: opts.mobileOnly } : {}),
+    ...(opts.webOnly !== undefined ? { web_only: opts.webOnly } : {}),
+  });
 }
