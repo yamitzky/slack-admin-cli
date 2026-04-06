@@ -1,10 +1,12 @@
+type Row = Record<string, unknown>;
+
 export function formatJson(data: unknown): string {
   return JSON.stringify(data, null, 2);
 }
 
-export function formatTable(
-  data: Record<string, unknown>[],
-  columns: string[],
+export function formatTable<T extends Row>(
+  data: T[],
+  columns: (keyof T & string)[],
 ): string {
   if (data.length === 0) return "No results";
 
@@ -13,7 +15,7 @@ export function formatTable(
     columns.map((c) => String(row[c] ?? "")),
   );
 
-  const widths = columns.map((col, i) =>
+  const widths = columns.map((_col, i) =>
     Math.max(headers[i].length, ...rows.map((r) => r[i].length)),
   );
 
@@ -26,9 +28,9 @@ export function formatTable(
   return [headerLine, separator, ...bodyLines].join("\n");
 }
 
-export function formatPlain(
-  data: Record<string, unknown>[],
-  columns: string[],
+export function formatPlain<T extends Row>(
+  data: T[],
+  columns: (keyof T & string)[],
 ): string {
   return data
     .map((row) => columns.map((c) => String(row[c] ?? "")).join("\t"))
@@ -37,9 +39,9 @@ export function formatPlain(
 
 export type OutputFormat = "json" | "table" | "plain";
 
-export function formatOutput(
-  data: Record<string, unknown>[],
-  columns: string[],
+export function formatOutput<T extends Row>(
+  data: T[],
+  columns: (keyof T & string)[],
   format: OutputFormat,
 ): string {
   switch (format) {

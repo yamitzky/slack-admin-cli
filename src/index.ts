@@ -95,223 +95,103 @@ const outputFormat: OutputFormat = jsonFlag ? "json" : plainFlag ? "plain" : "ta
 // Token commands
 // ---------------------------------------------------------------------------
 
-const tokenAddCommand = command(
+const tokenCommands = command(
   "token",
-  command(
-    "add",
-    object({
+  or(
+    command("add", object({
       cmd: constant("token-add" as const),
       name: argument(string({ metavar: "NAME" })),
       token: argument(string({ metavar: "TOKEN" })),
-    }),
-  ),
-);
-
-const tokenListCommand = command(
-  "token",
-  command(
-    "list",
-    object({
+    })),
+    command("list", object({
       cmd: constant("token-list" as const),
-    }),
-  ),
-);
-
-const tokenRemoveCommand = command(
-  "token",
-  command(
-    "remove",
-    object({
+    })),
+    command("remove", object({
       cmd: constant("token-remove" as const),
       name: argument(string({ metavar: "NAME" })),
-    }),
-  ),
-);
-
-const tokenStatusCommand = command(
-  "token",
-  command(
-    "status",
-    object({
+    })),
+    command("status", object({
       cmd: constant("token-status" as const),
-    }),
+    })),
   ),
-);
-
-const tokenCommands = or(
-  tokenAddCommand,
-  tokenListCommand,
-  tokenRemoveCommand,
-  tokenStatusCommand,
 );
 
 // ---------------------------------------------------------------------------
 // Teams commands
 // ---------------------------------------------------------------------------
 
-const teamsCreateCommand = command(
+const teamsSettingsCommands = command(
+  "settings",
+  or(
+    command("info", object({
+      cmd: constant("teams-settings-info" as const),
+      teamId: option("--team-id", string({ metavar: "TEAM_ID" })),
+    })),
+    command("set-name", object({
+      cmd: constant("teams-settings-set-name" as const),
+      teamId: option("--team-id", string({ metavar: "TEAM_ID" })),
+      name: option("--name", string({ metavar: "NAME" })),
+    })),
+    command("set-icon", object({
+      cmd: constant("teams-settings-set-icon" as const),
+      teamId: option("--team-id", string({ metavar: "TEAM_ID" })),
+      imageUrl: option("--image-url", string({ metavar: "IMAGE_URL" })),
+    })),
+    command("set-description", object({
+      cmd: constant("teams-settings-set-description" as const),
+      teamId: option("--team-id", string({ metavar: "TEAM_ID" })),
+      description: option("--description", string({ metavar: "DESCRIPTION" })),
+    })),
+    command("set-discoverability", object({
+      cmd: constant("teams-settings-set-discoverability" as const),
+      teamId: option("--team-id", string({ metavar: "TEAM_ID" })),
+      discoverability: option("--discoverability", discoverabilityValueParser),
+    })),
+  ),
+);
+
+const teamsCommands = command(
   "teams",
-  command(
-    "create",
-    object({
+  or(
+    command("create", object({
       cmd: constant("teams-create" as const),
       domain: option("--domain", string({ metavar: "DOMAIN" })),
       name: option("--name", string({ metavar: "NAME" })),
       description: optional(option("--description", string({ metavar: "DESCRIPTION" }))),
       discoverability: optional(option("--discoverability", discoverabilityValueParser)),
-    }),
-  ),
-);
-
-const teamsListCommand = command(
-  "teams",
-  command(
-    "list",
-    object({
+    })),
+    command("list", object({
       cmd: constant("teams-list" as const),
       cursor: optional(option("--cursor", string({ metavar: "CURSOR" }))),
       limit: optional(option("--limit", integer({ metavar: "LIMIT" }))),
-    }),
+    })),
+    command("admins", command("list", object({
+      cmd: constant("teams-admins-list" as const),
+      teamId: option("--team-id", string({ metavar: "TEAM_ID" })),
+    }))),
+    command("owners", command("list", object({
+      cmd: constant("teams-owners-list" as const),
+      teamId: option("--team-id", string({ metavar: "TEAM_ID" })),
+    }))),
+    teamsSettingsCommands,
   ),
-);
-
-const teamsAdminsListCommand = command(
-  "teams",
-  command(
-    "admins",
-    command(
-      "list",
-      object({
-        cmd: constant("teams-admins-list" as const),
-        teamId: option("--team-id", string({ metavar: "TEAM_ID" })),
-      }),
-    ),
-  ),
-);
-
-const teamsOwnersListCommand = command(
-  "teams",
-  command(
-    "owners",
-    command(
-      "list",
-      object({
-        cmd: constant("teams-owners-list" as const),
-        teamId: option("--team-id", string({ metavar: "TEAM_ID" })),
-      }),
-    ),
-  ),
-);
-
-const teamsSettingsInfoCommand = command(
-  "teams",
-  command(
-    "settings",
-    command(
-      "info",
-      object({
-        cmd: constant("teams-settings-info" as const),
-        teamId: option("--team-id", string({ metavar: "TEAM_ID" })),
-      }),
-    ),
-  ),
-);
-
-const teamsSettingsSetNameCommand = command(
-  "teams",
-  command(
-    "settings",
-    command(
-      "set-name",
-      object({
-        cmd: constant("teams-settings-set-name" as const),
-        teamId: option("--team-id", string({ metavar: "TEAM_ID" })),
-        name: option("--name", string({ metavar: "NAME" })),
-      }),
-    ),
-  ),
-);
-
-const teamsSettingsSetIconCommand = command(
-  "teams",
-  command(
-    "settings",
-    command(
-      "set-icon",
-      object({
-        cmd: constant("teams-settings-set-icon" as const),
-        teamId: option("--team-id", string({ metavar: "TEAM_ID" })),
-        imageUrl: option("--image-url", string({ metavar: "IMAGE_URL" })),
-      }),
-    ),
-  ),
-);
-
-const teamsSettingsSetDescriptionCommand = command(
-  "teams",
-  command(
-    "settings",
-    command(
-      "set-description",
-      object({
-        cmd: constant("teams-settings-set-description" as const),
-        teamId: option("--team-id", string({ metavar: "TEAM_ID" })),
-        description: option("--description", string({ metavar: "DESCRIPTION" })),
-      }),
-    ),
-  ),
-);
-
-const teamsSettingsSetDiscoverabilityCommand = command(
-  "teams",
-  command(
-    "settings",
-    command(
-      "set-discoverability",
-      object({
-        cmd: constant("teams-settings-set-discoverability" as const),
-        teamId: option("--team-id", string({ metavar: "TEAM_ID" })),
-        discoverability: option("--discoverability", discoverabilityValueParser),
-      }),
-    ),
-  ),
-);
-
-const teamsCommands = or(
-  teamsCreateCommand,
-  teamsListCommand,
-  teamsAdminsListCommand,
-  teamsOwnersListCommand,
-  teamsSettingsInfoCommand,
-  teamsSettingsSetNameCommand,
-  teamsSettingsSetIconCommand,
-  teamsSettingsSetDescriptionCommand,
-  teamsSettingsSetDiscoverabilityCommand,
 );
 
 // ---------------------------------------------------------------------------
 // Users commands
 // ---------------------------------------------------------------------------
 
-const usersListCommand = command(
+const usersCommands = command(
   "users",
-  command(
-    "list",
-    object({
+  or(
+    command("list", object({
       cmd: constant("users-list" as const),
       teamId: optional(option("--team-id", string({ metavar: "TEAM_ID" }))),
       isActive: optional(option("--is-active", boolValueParser)),
       cursor: optional(option("--cursor", string({ metavar: "CURSOR" }))),
       limit: optional(option("--limit", integer({ metavar: "LIMIT" }))),
-    }),
-  ),
-);
-
-const usersInviteCommand = command(
-  "users",
-  command(
-    "invite",
-    object({
+    })),
+    command("invite", object({
       cmd: constant("users-invite" as const),
       teamId: option("--team-id", string({ metavar: "TEAM_ID" })),
       email: option("--email", string({ metavar: "EMAIL" })),
@@ -320,98 +200,42 @@ const usersInviteCommand = command(
       realName: optional(option("--real-name", string({ metavar: "NAME" }))),
       isRestricted: optional(option("--is-restricted", boolValueParser)),
       isUltraRestricted: optional(option("--is-ultra-restricted", boolValueParser)),
-    }),
-  ),
-);
-
-const usersAssignCommand = command(
-  "users",
-  command(
-    "assign",
-    object({
+    })),
+    command("assign", object({
       cmd: constant("users-assign" as const),
       teamId: option("--team-id", string({ metavar: "TEAM_ID" })),
       userId: option("--user-id", string({ metavar: "USER_ID" })),
       channelIds: optional(option("--channel-ids", string({ metavar: "CHANNEL_IDS" }))),
       isRestricted: optional(option("--is-restricted", boolValueParser)),
       isUltraRestricted: optional(option("--is-ultra-restricted", boolValueParser)),
-    }),
-  ),
-);
-
-const usersRemoveCommand = command(
-  "users",
-  command(
-    "remove",
-    object({
+    })),
+    command("remove", object({
       cmd: constant("users-remove" as const),
       teamId: option("--team-id", string({ metavar: "TEAM_ID" })),
       userId: option("--user-id", string({ metavar: "USER_ID" })),
-    }),
-  ),
-);
-
-const usersSetAdminCommand = command(
-  "users",
-  command(
-    "set-admin",
-    object({
+    })),
+    command("set-admin", object({
       cmd: constant("users-set-admin" as const),
       teamId: option("--team-id", string({ metavar: "TEAM_ID" })),
       userId: option("--user-id", string({ metavar: "USER_ID" })),
-    }),
-  ),
-);
-
-const usersSetOwnerCommand = command(
-  "users",
-  command(
-    "set-owner",
-    object({
+    })),
+    command("set-owner", object({
       cmd: constant("users-set-owner" as const),
       teamId: option("--team-id", string({ metavar: "TEAM_ID" })),
       userId: option("--user-id", string({ metavar: "USER_ID" })),
-    }),
-  ),
-);
-
-const usersSetRegularCommand = command(
-  "users",
-  command(
-    "set-regular",
-    object({
+    })),
+    command("set-regular", object({
       cmd: constant("users-set-regular" as const),
       teamId: option("--team-id", string({ metavar: "TEAM_ID" })),
       userId: option("--user-id", string({ metavar: "USER_ID" })),
-    }),
+    })),
+    command("session", command("reset", object({
+      cmd: constant("users-session-reset" as const),
+      userId: option("--user-id", string({ metavar: "USER_ID" })),
+      mobileOnly: optional(option("--mobile-only", boolValueParser)),
+      webOnly: optional(option("--web-only", boolValueParser)),
+    }))),
   ),
-);
-
-const usersSessionResetCommand = command(
-  "users",
-  command(
-    "session",
-    command(
-      "reset",
-      object({
-        cmd: constant("users-session-reset" as const),
-        userId: option("--user-id", string({ metavar: "USER_ID" })),
-        mobileOnly: optional(option("--mobile-only", boolValueParser)),
-        webOnly: optional(option("--web-only", boolValueParser)),
-      }),
-    ),
-  ),
-);
-
-const usersCommands = or(
-  usersListCommand,
-  usersInviteCommand,
-  usersAssignCommand,
-  usersRemoveCommand,
-  usersSetAdminCommand,
-  usersSetOwnerCommand,
-  usersSetRegularCommand,
-  usersSessionResetCommand,
 );
 
 // ---------------------------------------------------------------------------
@@ -473,21 +297,23 @@ switch (config.cmd) {
   case "teams-list": {
     const client = await createSlackClient(store, profileFlag);
     const teams = await executeTeamsList(client, { cursor: config.cursor, limit: config.limit });
-    const rows = teams as Record<string, unknown>[];
-    console.log(formatOutput(rows, ["id", "name", "domain"], outputFormat));
+    const teamRows = teams.map((t: { id?: string; name?: string; domain?: string }) => ({
+      id: t.id ?? "", name: t.name ?? "", domain: t.domain ?? "",
+    }));
+    console.log(formatOutput(teamRows, ["id", "name", "domain"], outputFormat));
     break;
   }
   case "teams-admins-list": {
     const client = await createSlackClient(store, profileFlag);
     const adminIds = await executeTeamsAdminsList(client, { teamId: config.teamId });
-    const rows = (adminIds as string[]).map((id) => ({ id }));
+    const rows = adminIds.map((id: string) => ({ id }));
     console.log(formatOutput(rows, ["id"], outputFormat));
     break;
   }
   case "teams-owners-list": {
     const client = await createSlackClient(store, profileFlag);
     const ownerIds = await executeTeamsOwnersList(client, { teamId: config.teamId });
-    const rows = (ownerIds as string[]).map((id) => ({ id }));
+    const rows = ownerIds.map((id: string) => ({ id }));
     console.log(formatOutput(rows, ["id"], outputFormat));
     break;
   }
@@ -529,8 +355,10 @@ switch (config.cmd) {
       cursor: config.cursor,
       limit: config.limit,
     });
-    const rows = users as Record<string, unknown>[];
-    console.log(formatOutput(rows, ["id", "name", "email"], outputFormat));
+    const userRows = users.map((u: { id?: string; name?: string; email?: string }) => ({
+      id: u.id ?? "", name: u.name ?? "", email: u.email ?? "",
+    }));
+    console.log(formatOutput(userRows, ["id", "name", "email"], outputFormat));
     break;
   }
   case "users-invite": {
