@@ -1038,25 +1038,25 @@ Expected: 全て FAIL
 // src/commands/teams/create.ts
 import type { WebClient } from "@slack/web-api";
 
+export type TeamDiscoverability = "open" | "closed" | "invite_only" | "unlisted";
+
 interface TeamsCreateOptions {
   teamDomain: string;
   teamName: string;
   teamDescription?: string;
-  teamDiscoverability?: "open" | "closed" | "invite_only" | "unlisted";
+  teamDiscoverability?: TeamDiscoverability;
 }
 
 export async function executeTeamsCreate(
   client: WebClient,
   opts: TeamsCreateOptions,
 ) {
-  const args: Record<string, string> = {
+  return await client.admin.teams.create({
     team_domain: opts.teamDomain,
     team_name: opts.teamName,
-  };
-  if (opts.teamDescription) args.team_description = opts.teamDescription;
-  if (opts.teamDiscoverability) args.team_discoverability = opts.teamDiscoverability;
-
-  return await (client.admin.teams.create as Function)(args);
+    team_description: opts.teamDescription,
+    team_discoverability: opts.teamDiscoverability,
+  });
 }
 ```
 
@@ -1073,11 +1073,10 @@ export async function executeTeamsList(
   client: WebClient,
   opts: TeamsListOptions,
 ) {
-  const args: Record<string, unknown> = {};
-  if (opts.cursor) args.cursor = opts.cursor;
-  if (opts.limit) args.limit = opts.limit;
-
-  const response = await (client.admin.teams.list as Function)(args);
+  const response = await client.admin.teams.list({
+    cursor: opts.cursor,
+    limit: opts.limit,
+  });
   return response.teams ?? [];
 }
 ```
@@ -1096,11 +1095,11 @@ export async function executeTeamsAdminsList(
   client: WebClient,
   opts: TeamsAdminsListOptions,
 ) {
-  const args: Record<string, unknown> = { team_id: opts.teamId };
-  if (opts.cursor) args.cursor = opts.cursor;
-  if (opts.limit) args.limit = opts.limit;
-
-  const response = await (client.admin.teams.admins.list as Function)(args);
+  const response = await client.admin.teams.admins.list({
+    team_id: opts.teamId,
+    cursor: opts.cursor,
+    limit: opts.limit,
+  });
   return response.admin_ids ?? [];
 }
 ```
@@ -1119,11 +1118,11 @@ export async function executeTeamsOwnersList(
   client: WebClient,
   opts: TeamsOwnersListOptions,
 ) {
-  const args: Record<string, unknown> = { team_id: opts.teamId };
-  if (opts.cursor) args.cursor = opts.cursor;
-  if (opts.limit) args.limit = opts.limit;
-
-  const response = await (client.admin.teams.owners.list as Function)(args);
+  const response = await client.admin.teams.owners.list({
+    team_id: opts.teamId,
+    cursor: opts.cursor,
+    limit: opts.limit,
+  });
   return response.owner_ids ?? [];
 }
 ```
@@ -1290,7 +1289,7 @@ export async function executeSettingsInfo(
   client: WebClient,
   opts: { teamId: string },
 ) {
-  const response = await (client.admin.teams.settings.info as Function)({
+  const response = await client.admin.teams.settings.info({
     team_id: opts.teamId,
   });
   return response.team;
@@ -1305,7 +1304,7 @@ export async function executeSetName(
   client: WebClient,
   opts: { teamId: string; name: string },
 ) {
-  return await (client.admin.teams.settings.setName as Function)({
+  return await client.admin.teams.settings.setName({
     team_id: opts.teamId,
     name: opts.name,
   });
@@ -1320,7 +1319,7 @@ export async function executeSetIcon(
   client: WebClient,
   opts: { teamId: string; imageUrl: string },
 ) {
-  return await (client.admin.teams.settings.setIcon as Function)({
+  return await client.admin.teams.settings.setIcon({
     team_id: opts.teamId,
     image_url: opts.imageUrl,
   });
@@ -1335,7 +1334,7 @@ export async function executeSetDescription(
   client: WebClient,
   opts: { teamId: string; description: string },
 ) {
-  return await (client.admin.teams.settings.setDescription as Function)({
+  return await client.admin.teams.settings.setDescription({
     team_id: opts.teamId,
     description: opts.description,
   });
@@ -1345,14 +1344,13 @@ export async function executeSetDescription(
 ```typescript
 // src/commands/teams/settings/set-discoverability.ts
 import type { WebClient } from "@slack/web-api";
-
-type Discoverability = "open" | "closed" | "invite_only" | "unlisted";
+import type { TeamDiscoverability } from "../create";
 
 export async function executeSetDiscoverability(
   client: WebClient,
-  opts: { teamId: string; discoverability: Discoverability },
+  opts: { teamId: string; discoverability: TeamDiscoverability },
 ) {
-  return await (client.admin.teams.settings.setDiscoverability as Function)({
+  return await client.admin.teams.settings.setDiscoverability({
     team_id: opts.teamId,
     discoverability: opts.discoverability,
   });
@@ -1676,13 +1674,12 @@ export async function executeUsersList(
   client: WebClient,
   opts: UsersListOptions,
 ) {
-  const args: Record<string, unknown> = {};
-  if (opts.teamId) args.team_id = opts.teamId;
-  if (opts.isActive !== undefined) args.is_active = opts.isActive;
-  if (opts.cursor) args.cursor = opts.cursor;
-  if (opts.limit) args.limit = opts.limit;
-
-  const response = await (client.admin.users.list as Function)(args);
+  const response = await client.admin.users.list({
+    team_id: opts.teamId,
+    is_active: opts.isActive,
+    cursor: opts.cursor,
+    limit: opts.limit,
+  });
   return response.users ?? [];
 }
 ```
@@ -1707,19 +1704,17 @@ export async function executeUsersInvite(
   client: WebClient,
   opts: UsersInviteOptions,
 ) {
-  const args: Record<string, unknown> = {
+  return await client.admin.users.invite({
     team_id: opts.teamId,
     email: opts.email,
     channel_ids: opts.channelIds,
-  };
-  if (opts.customMessage) args.custom_message = opts.customMessage;
-  if (opts.realName) args.real_name = opts.realName;
-  if (opts.isRestricted) args.is_restricted = opts.isRestricted;
-  if (opts.isUltraRestricted) args.is_ultra_restricted = opts.isUltraRestricted;
-  if (opts.guestExpirationTs) args.guest_expiration_ts = opts.guestExpirationTs;
-  if (opts.resend) args.resend = opts.resend;
-
-  return await (client.admin.users.invite as Function)(args);
+    custom_message: opts.customMessage,
+    real_name: opts.realName,
+    is_restricted: opts.isRestricted,
+    is_ultra_restricted: opts.isUltraRestricted,
+    guest_expiration_ts: opts.guestExpirationTs,
+    resend: opts.resend,
+  });
 }
 ```
 
@@ -1739,15 +1734,13 @@ export async function executeUsersAssign(
   client: WebClient,
   opts: UsersAssignOptions,
 ) {
-  const args: Record<string, unknown> = {
+  return await client.admin.users.assign({
     team_id: opts.teamId,
     user_id: opts.userId,
-  };
-  if (opts.channelIds) args.channel_ids = opts.channelIds;
-  if (opts.isRestricted) args.is_restricted = opts.isRestricted;
-  if (opts.isUltraRestricted) args.is_ultra_restricted = opts.isUltraRestricted;
-
-  return await (client.admin.users.assign as Function)(args);
+    channel_ids: opts.channelIds,
+    is_restricted: opts.isRestricted,
+    is_ultra_restricted: opts.isUltraRestricted,
+  });
 }
 ```
 
@@ -1759,7 +1752,7 @@ export async function executeUsersRemove(
   client: WebClient,
   opts: { teamId: string; userId: string },
 ) {
-  return await (client.admin.users.remove as Function)({
+  return await client.admin.users.remove({
     team_id: opts.teamId,
     user_id: opts.userId,
   });
@@ -1774,7 +1767,7 @@ export async function executeUsersSetAdmin(
   client: WebClient,
   opts: { teamId: string; userId: string },
 ) {
-  return await (client.admin.users.setAdmin as Function)({
+  return await client.admin.users.setAdmin({
     team_id: opts.teamId,
     user_id: opts.userId,
   });
@@ -1789,7 +1782,7 @@ export async function executeUsersSetOwner(
   client: WebClient,
   opts: { teamId: string; userId: string },
 ) {
-  return await (client.admin.users.setOwner as Function)({
+  return await client.admin.users.setOwner({
     team_id: opts.teamId,
     user_id: opts.userId,
   });
@@ -1804,7 +1797,7 @@ export async function executeUsersSetRegular(
   client: WebClient,
   opts: { teamId: string; userId: string },
 ) {
-  return await (client.admin.users.setRegular as Function)({
+  return await client.admin.users.setRegular({
     team_id: opts.teamId,
     user_id: opts.userId,
   });
@@ -1825,11 +1818,11 @@ export async function executeSessionReset(
   client: WebClient,
   opts: SessionResetOptions,
 ) {
-  const args: Record<string, unknown> = { user_id: opts.userId };
-  if (opts.mobileOnly) args.mobile_only = opts.mobileOnly;
-  if (opts.webOnly) args.web_only = opts.webOnly;
-
-  return await (client.admin.users.session.reset as Function)(args);
+  return await client.admin.users.session.reset({
+    user_id: opts.userId,
+    mobile_only: opts.mobileOnly,
+    web_only: opts.webOnly,
+  });
 }
 ```
 
@@ -1933,6 +1926,27 @@ const tokenStatus = command(
 );
 
 // --- Teams commands ---
+// discoverability のバリデーション用ヘルパー
+// optique の map() で文字列をリテラル型に変換・検証する
+import { map } from "@optique/core/modifiers";
+
+const DISCOVERABILITY_VALUES = ["open", "closed", "invite_only", "unlisted"] as const;
+
+function isDiscoverability(value: string): value is TeamDiscoverability {
+  return (DISCOVERABILITY_VALUES as readonly string[]).includes(value);
+}
+
+function parseDiscoverability(value: string): TeamDiscoverability {
+  if (!isDiscoverability(value)) {
+    throw new Error(
+      `Invalid discoverability: ${value}. Must be one of: ${DISCOVERABILITY_VALUES.join(", ")}`,
+    );
+  }
+  return value;
+}
+
+const discoverabilityParser = map(string(), parseDiscoverability);
+
 const teamsCreate = command(
   "teams",
   command(
@@ -1942,7 +1956,7 @@ const teamsCreate = command(
       teamDomain: option("--domain", string({ metavar: "DOMAIN" })),
       teamName: option("--name", string({ metavar: "NAME" })),
       teamDescription: optional(option("--description", string())),
-      teamDiscoverability: optional(option("--discoverability", string())),
+      teamDiscoverability: optional(option("--discoverability", discoverabilityParser)),
     }),
   ),
 );
@@ -2055,13 +2069,21 @@ const teamsSettingsSetDiscoverability = command(
       object({
         cmd: constant("teams-settings-set-discoverability" as const),
         teamId: option("--team-id", string({ metavar: "TEAM_ID" })),
-        discoverability: option("--discoverability", string({ metavar: "VALUE" })),
+        discoverability: option("--discoverability", discoverabilityParser),
       }),
     ),
   ),
 );
 
 // --- Users commands ---
+// boolean 文字列パーサー（"true"/"false" を boolean に変換）
+function parseBool(value: string): boolean {
+  if (value === "true") return true;
+  if (value === "false") return false;
+  throw new Error(`Invalid boolean: ${value}. Must be "true" or "false"`);
+}
+const boolParser = map(string(), parseBool);
+
 const usersList = command(
   "users",
   command(
@@ -2069,7 +2091,7 @@ const usersList = command(
     object({
       cmd: constant("users-list" as const),
       teamId: optional(option("--team-id", string({ metavar: "TEAM_ID" }))),
-      isActive: optional(option("--is-active", string())),
+      isActive: optional(option("--is-active", boolParser)),
       cursor: optional(option("--cursor", string())),
       limit: optional(option("--limit", integer())),
     }),
@@ -2087,8 +2109,8 @@ const usersInvite = command(
       channelIds: option("--channel-ids", string({ metavar: "IDS" })),
       customMessage: optional(option("--custom-message", string())),
       realName: optional(option("--real-name", string())),
-      isRestricted: optional(option("--is-restricted", string())),
-      isUltraRestricted: optional(option("--is-ultra-restricted", string())),
+      isRestricted: optional(option("--is-restricted", boolParser)),
+      isUltraRestricted: optional(option("--is-ultra-restricted", boolParser)),
     }),
   ),
 );
@@ -2102,8 +2124,8 @@ const usersAssign = command(
       teamId: option("--team-id", string({ metavar: "TEAM_ID" })),
       userId: option("--user-id", string({ metavar: "USER_ID" })),
       channelIds: optional(option("--channel-ids", string())),
-      isRestricted: optional(option("--is-restricted", string())),
-      isUltraRestricted: optional(option("--is-ultra-restricted", string())),
+      isRestricted: optional(option("--is-restricted", boolParser)),
+      isUltraRestricted: optional(option("--is-ultra-restricted", boolParser)),
     }),
   ),
 );
@@ -2165,8 +2187,8 @@ const usersSessionReset = command(
       object({
         cmd: constant("users-session-reset" as const),
         userId: option("--user-id", string({ metavar: "USER_ID" })),
-        mobileOnly: optional(option("--mobile-only", string())),
-        webOnly: optional(option("--web-only", string())),
+        mobileOnly: optional(option("--mobile-only", boolParser)),
+        webOnly: optional(option("--web-only", boolParser)),
       }),
     ),
   ),
@@ -2244,7 +2266,7 @@ async function main() {
           teamDomain: config.teamDomain,
           teamName: config.teamName,
           teamDescription: config.teamDescription,
-          teamDiscoverability: config.teamDiscoverability as any,
+          teamDiscoverability: config.teamDiscoverability,
         });
         if (jsonFlag) {
           console.log(JSON.stringify(result, null, 2));
@@ -2308,7 +2330,7 @@ async function main() {
         const client = await createSlackClient(store, profileFlag);
         await executeSetDiscoverability(client, {
           teamId: config.teamId,
-          discoverability: config.discoverability as any,
+          discoverability: config.discoverability,
         });
         console.log("Team discoverability updated.");
         break;
@@ -2319,7 +2341,7 @@ async function main() {
         const client = await createSlackClient(store, profileFlag);
         const users = await executeUsersList(client, {
           teamId: config.teamId,
-          isActive: config.isActive === "true" ? true : config.isActive === "false" ? false : undefined,
+          isActive: config.isActive,
           cursor: config.cursor,
           limit: config.limit,
         });
@@ -2334,8 +2356,8 @@ async function main() {
           channelIds: config.channelIds.split(","),
           customMessage: config.customMessage,
           realName: config.realName,
-          isRestricted: config.isRestricted === "true",
-          isUltraRestricted: config.isUltraRestricted === "true",
+          isRestricted: config.isRestricted,
+          isUltraRestricted: config.isUltraRestricted,
         });
         console.log("User invited.");
         break;
@@ -2346,8 +2368,8 @@ async function main() {
           teamId: config.teamId,
           userId: config.userId,
           channelIds: config.channelIds?.split(","),
-          isRestricted: config.isRestricted === "true",
-          isUltraRestricted: config.isUltraRestricted === "true",
+          isRestricted: config.isRestricted,
+          isUltraRestricted: config.isUltraRestricted,
         });
         console.log("User assigned.");
         break;
@@ -2380,8 +2402,8 @@ async function main() {
         const client = await createSlackClient(store, profileFlag);
         await executeSessionReset(client, {
           userId: config.userId,
-          mobileOnly: config.mobileOnly === "true",
-          webOnly: config.webOnly === "true",
+          mobileOnly: config.mobileOnly,
+          webOnly: config.webOnly,
         });
         console.log("Session reset.");
         break;
