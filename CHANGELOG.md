@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.1](https://github.com/yamitzky/slack-admin-cli/compare/sladm-cli-v0.2.0...sladm-cli-v0.2.1) (2026-04-07)
+
+
+### Bug Fixes
+
+* remove broken npm upgrade step from release workflow ([32e8c06](https://github.com/yamitzky/slack-admin-cli/commit/32e8c066be2909fdf4a43a6f545169f0a9af7706))
+
 ## [0.2.0](https://github.com/yamitzky/slack-admin-cli/compare/sladm-cli-v0.1.0...sladm-cli-v0.2.0) (2026-04-07)
 
 
