@@ -28,6 +28,25 @@ bun install -g sladm
 npx sladm --help
 ```
 
+### ビルド済みバイナリ
+
+ランタイム不要のスタンドアロンバイナリを [Releases](https://github.com/yamitzky/slack-admin-cli/releases) ページからダウンロードできます:
+
+| プラットフォーム | ファイル |
+|----------------|---------|
+| macOS (Apple Silicon) | `sladm-darwin-arm64` |
+| macOS (Intel) | `sladm-darwin-x64` |
+| Linux (x64) | `sladm-linux-x64` |
+| Linux (arm64) | `sladm-linux-arm64` |
+| Windows (x64) | `sladm-windows-x64.exe` |
+
+```bash
+# 例: macOS (Apple Silicon) でダウンロード・インストール
+curl -L https://github.com/yamitzky/slack-admin-cli/releases/latest/download/sladm-darwin-arm64 -o sladm
+chmod +x sladm
+sudo mv sladm /usr/local/bin/
+```
+
 ## Agent Skill
 
 Claude Code、Cursor、OpenCode 等のコーディングエージェントでスキルとして利用する場合:

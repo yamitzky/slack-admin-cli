@@ -28,6 +28,25 @@ Or run directly without installing:
 npx sladm --help
 ```
 
+### Pre-built Binaries
+
+Standalone binaries (no runtime required) are available on the [Releases](https://github.com/yamitzky/slack-admin-cli/releases) page:
+
+| Platform | File |
+|----------|------|
+| macOS (Apple Silicon) | `sladm-darwin-arm64` |
+| macOS (Intel) | `sladm-darwin-x64` |
+| Linux (x64) | `sladm-linux-x64` |
+| Linux (arm64) | `sladm-linux-arm64` |
+| Windows (x64) | `sladm-windows-x64.exe` |
+
+```bash
+# Example: download and install on macOS (Apple Silicon)
+curl -L https://github.com/yamitzky/slack-admin-cli/releases/latest/download/sladm-darwin-arm64 -o sladm
+chmod +x sladm
+sudo mv sladm /usr/local/bin/
+```
+
 ## Agent Skill
 
 To use this CLI as an agent skill in Claude Code, Cursor, OpenCode, etc.:
