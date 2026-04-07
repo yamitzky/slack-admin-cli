@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.4](https://github.com/yamitzky/slack-admin-cli/compare/sladm-cli-v0.2.3...sladm-cli-v0.2.4) (2026-04-07)
+
+
+### Bug Fixes
+
+* trigger binary build from release workflow via workflow_call ([a41ecee](https://github.com/yamitzky/slack-admin-cli/commit/a41ecee3f2e3481c8cab36a8848cabdd6f6033ca))
+
 ## [0.2.3](https://github.com/yamitzky/slack-admin-cli/compare/sladm-cli-v0.2.2...sladm-cli-v0.2.3) (2026-04-07)
 
 

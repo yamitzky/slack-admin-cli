@@ -1,6 +1,6 @@
 {
   "name": "sladm-cli",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "description": "Slack Admin CLI for humans and AI agents — manage Enterprise Grid via admin.* APIs",
   "type": "module",
   "bin": {
