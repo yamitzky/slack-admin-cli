@@ -101,19 +101,41 @@ const discoverabilityValueParser: ValueParser<"sync", TeamDiscoverability> = {
 // Global flags (parsed manually from process.argv)
 // ---------------------------------------------------------------------------
 
-function extractFlag(flag: string): boolean {
-  return process.argv.includes(flag);
+const GLOBAL_FLAGS = new Set(["--json", "--plain"]);
+const GLOBAL_FLAGS_WITH_VALUE = new Set(["--profile"]);
+
+function parseGlobalFlags(argv: string[]): {
+  json: boolean;
+  plain: boolean;
+  profile: string | undefined;
+  rest: string[];
+} {
+  let json = false;
+  let plain = false;
+  let profile: string | undefined;
+  const rest: string[] = [];
+
+  for (let i = 0; i < argv.length; i++) {
+    const arg = argv[i];
+    if (arg === "--json") {
+      json = true;
+    } else if (arg === "--plain") {
+      plain = true;
+    } else if (arg === "--profile") {
+      profile = argv[i + 1];
+      i++;
+    } else {
+      rest.push(arg);
+    }
+  }
+
+  return { json, plain, profile, rest };
 }
 
-function extractFlagValue(flag: string): string | undefined {
-  const idx = process.argv.indexOf(flag);
-  if (idx === -1) return undefined;
-  return process.argv[idx + 1];
-}
-
-const jsonFlag = extractFlag("--json");
-const plainFlag = extractFlag("--plain");
-const profileFlag = extractFlagValue("--profile");
+const globalFlags = parseGlobalFlags(process.argv.slice(2));
+const jsonFlag = globalFlags.json;
+const plainFlag = globalFlags.plain;
+const profileFlag = globalFlags.profile;
 
 const outputFormat: OutputFormat = jsonFlag ? "json" : plainFlag ? "plain" : "table";
 
@@ -443,6 +465,7 @@ const config = await run(rootParser, {
   programName: "sladm",
   help: "both",
   version: { value: "0.1.0", mode: "both" },
+  args: globalFlags.rest,
 });
 
 const store = new ProfileStore();
