@@ -1,0 +1,10 @@
+{
+  "name": "slack-admin-cli",
+  "version": "0.1.0",
+  "description": "Slack Admin API を CLI & Agent Skill で操作するためのスキル。チーム・ユーザー・チャンネル・アプリ・ワークフロー・関数・招待リクエストの管理操作を提供。",
+  "author": {
+    "name": "Mitsuki Ogasahara"
+  },
+  "repository": "https://github.com/mitsuki-ogasahara/slack-admin-cli",
+  "skills": ["./skills"]
+}
