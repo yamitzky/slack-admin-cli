@@ -754,6 +754,7 @@ const rootParser = or(
 // Main
 // ---------------------------------------------------------------------------
 
+async function main() {
 const config = await run(rootParser, {
   programName: "sladm",
   help: "both",
@@ -1503,3 +1504,6 @@ switch (config.cmd) {
     throw new Error(`Unknown command`);
   }
 }
+}
+
+main();
