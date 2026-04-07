@@ -1,6 +1,6 @@
 {
   "name": "sladm",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "Slack Admin CLI for humans and AI agents — manage Enterprise Grid via admin.* APIs",
   "type": "module",
   "bin": {
@@ -11,12 +11,24 @@
     "test": "bun test",
     "lint": "bunx tsc --noEmit"
   },
-  "files": ["src/**/*.ts", "skills/**/*", ".claude-plugin/**/*", "LICENSE", "README.md"],
+  "files": [
+    "src/**/*.ts",
+    "skills/**/*",
+    ".claude-plugin/**/*",
+    "LICENSE",
+    "README.md"
+  ],
   "repository": {
     "type": "git",
     "url": "https://github.com/yamitzky/slack-admin-cli.git"
   },
-  "keywords": ["slack", "slack-admin", "enterprise-grid", "cli", "agent-skill"],
+  "keywords": [
+    "slack",
+    "slack-admin",
+    "enterprise-grid",
+    "cli",
+    "agent-skill"
+  ],
   "author": "Mitsuki Ogasahara",
   "license": "MIT",
   "engines": {
