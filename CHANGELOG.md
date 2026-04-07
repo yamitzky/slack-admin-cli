@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.2.5](https://github.com/yamitzky/slack-admin-cli/compare/sladm-cli-v0.2.4...sladm-cli-v0.2.5) (2026-04-07)
+
+
+### Bug Fixes
+
+* pin bun-version to latest in binary build workflow ([ce113e5](https://github.com/yamitzky/slack-admin-cli/commit/ce113e528310c74858cc32abf6520578ce8b3bbd))
+* wrap main logic in async function for bun build --compile ([35ba8bd](https://github.com/yamitzky/slack-admin-cli/commit/35ba8bdbaebd8a736b5ffa8200484018aaf5834d))
+
 ## [0.2.4](https://github.com/yamitzky/slack-admin-cli/compare/sladm-cli-v0.2.3...sladm-cli-v0.2.4) (2026-04-07)
 
 
