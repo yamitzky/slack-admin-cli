@@ -15,5 +15,5 @@ export async function executeFunctionsPermissionsSet(
     visibility: opts.visibility,
   };
   if (opts.userIds !== undefined) params.user_ids = opts.userIds;
-  await client.admin.functions.permissions.set(params);
+  await client.apiCall("admin.functions.permissions.set", params);
 }

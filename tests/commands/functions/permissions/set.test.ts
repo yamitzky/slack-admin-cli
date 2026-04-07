@@ -3,8 +3,8 @@ import { executeFunctionsPermissionsSet } from "../../../../src/commands/functio
 
 describe("functions permissions set", () => {
   test("calls admin.functions.permissions.set with all params", async () => {
-    const mockSet = mock(() => Promise.resolve({ ok: true }));
-    const client = { admin: { functions: { permissions: { set: mockSet } } } } as any;
+    const mockApiCall = mock(() => Promise.resolve({ ok: true }));
+    const client = { apiCall: mockApiCall } as any;
 
     await executeFunctionsPermissionsSet(client, {
       functionId: "Fn1",
@@ -12,7 +12,7 @@ describe("functions permissions set", () => {
       userIds: ["U1", "U2"],
     });
 
-    expect(mockSet).toHaveBeenCalledWith({
+    expect(mockApiCall).toHaveBeenCalledWith("admin.functions.permissions.set", {
       function_id: "Fn1",
       visibility: "named_entities",
       user_ids: ["U1", "U2"],
@@ -20,15 +20,15 @@ describe("functions permissions set", () => {
   });
 
   test("calls without user_ids", async () => {
-    const mockSet = mock(() => Promise.resolve({ ok: true }));
-    const client = { admin: { functions: { permissions: { set: mockSet } } } } as any;
+    const mockApiCall = mock(() => Promise.resolve({ ok: true }));
+    const client = { apiCall: mockApiCall } as any;
 
     await executeFunctionsPermissionsSet(client, {
       functionId: "Fn1",
       visibility: "everyone",
     });
 
-    expect(mockSet).toHaveBeenCalledWith({
+    expect(mockApiCall).toHaveBeenCalledWith("admin.functions.permissions.set", {
       function_id: "Fn1",
       visibility: "everyone",
     });

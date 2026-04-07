@@ -3,8 +3,8 @@ import { executeAppsConfigSet } from "../../../../src/commands/apps/config/set";
 
 describe("apps config set", () => {
   test("calls admin.apps.config.set with all params", async () => {
-    const mockSet = mock(() => Promise.resolve({ ok: true }));
-    const client = { admin: { apps: { config: { set: mockSet } } } } as any;
+    const mockApiCall = mock(() => Promise.resolve({ ok: true }));
+    const client = { apiCall: mockApiCall } as any;
 
     await executeAppsConfigSet(client, {
       appId: "A1",
@@ -12,7 +12,7 @@ describe("apps config set", () => {
       workflowAuthStrategy: "end_user_only",
     });
 
-    expect(mockSet).toHaveBeenCalledWith({
+    expect(mockApiCall).toHaveBeenCalledWith("admin.apps.config.set", {
       app_id: "A1",
       domain_restrictions: { urls: ["https://example.com"] },
       workflow_auth_strategy: "end_user_only",
@@ -20,11 +20,11 @@ describe("apps config set", () => {
   });
 
   test("calls with only app_id", async () => {
-    const mockSet = mock(() => Promise.resolve({ ok: true }));
-    const client = { admin: { apps: { config: { set: mockSet } } } } as any;
+    const mockApiCall = mock(() => Promise.resolve({ ok: true }));
+    const client = { apiCall: mockApiCall } as any;
 
     await executeAppsConfigSet(client, { appId: "A1" });
 
-    expect(mockSet).toHaveBeenCalledWith({ app_id: "A1" });
+    expect(mockApiCall).toHaveBeenCalledWith("admin.apps.config.set", { app_id: "A1" });
   });
 });

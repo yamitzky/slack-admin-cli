@@ -54,6 +54,34 @@ import { executeRestrictAccessListGroups } from "./commands/conversations/restri
 import { executeRestrictAccessRemoveGroup } from "./commands/conversations/restrict-access/remove-group";
 import { executeEkmListOriginalConnectedChannelInfo } from "./commands/conversations/ekm/list-original-connected-channel-info";
 
+import { executeAppsApprove } from "./commands/apps/approve";
+import { executeAppsRestrict } from "./commands/apps/restrict";
+import { executeAppsClearResolution } from "./commands/apps/clear-resolution";
+import { executeAppsUninstall } from "./commands/apps/uninstall";
+import { executeAppsActivitiesList } from "./commands/apps/activities/list";
+import { executeAppsApprovedList } from "./commands/apps/approved/list";
+import { executeAppsRequestsCancel } from "./commands/apps/requests/cancel";
+import { executeAppsRequestsList } from "./commands/apps/requests/list";
+import { executeAppsRestrictedList } from "./commands/apps/restricted/list";
+import { executeAppsConfigLookup } from "./commands/apps/config/lookup";
+import { executeAppsConfigSet } from "./commands/apps/config/set";
+
+import { executeInviteRequestsApprove } from "./commands/invite-requests/approve";
+import { executeInviteRequestsDeny } from "./commands/invite-requests/deny";
+import { executeInviteRequestsList } from "./commands/invite-requests/list";
+import { executeInviteRequestsApprovedList } from "./commands/invite-requests/approved/list";
+import { executeInviteRequestsDeniedList } from "./commands/invite-requests/denied/list";
+
+import { executeWorkflowsSearch } from "./commands/workflows/search";
+import { executeWorkflowsUnpublish } from "./commands/workflows/unpublish";
+import { executeWorkflowsPermissionsLookup } from "./commands/workflows/permissions/lookup";
+import { executeWorkflowsCollaboratorsAdd } from "./commands/workflows/collaborators/add";
+import { executeWorkflowsCollaboratorsRemove } from "./commands/workflows/collaborators/remove";
+
+import { executeFunctionsList } from "./commands/functions/list";
+import { executeFunctionsPermissionsLookup } from "./commands/functions/permissions/lookup";
+import { executeFunctionsPermissionsSet } from "./commands/functions/permissions/set";
+
 import { ProfileStore } from "./config";
 import { createSlackClient } from "./client";
 import { formatOutput, type OutputFormat } from "./output";
@@ -452,10 +480,275 @@ const conversationsCommands = command(
 );
 
 // ---------------------------------------------------------------------------
+// Apps commands
+// ---------------------------------------------------------------------------
+
+const appsActivitiesCommands = command(
+  "activities",
+  command("list", object({
+    cmd: constant("apps-activities-list" as const),
+    appId: optional(option("--app-id", string({ metavar: "APP_ID" }))),
+    teamId: optional(option("--team-id", string({ metavar: "TEAM_ID" }))),
+    componentId: optional(option("--component-id", string({ metavar: "COMPONENT_ID" }))),
+    componentType: optional(option("--component-type", string({ metavar: "TYPE" }))),
+    logEventType: optional(option("--log-event-type", string({ metavar: "EVENT_TYPE" }))),
+    maxDateCreated: optional(option("--max-date-created", integer({ metavar: "TIMESTAMP" }))),
+    minDateCreated: optional(option("--min-date-created", integer({ metavar: "TIMESTAMP" }))),
+    minLogLevel: optional(option("--min-log-level", string({ metavar: "LEVEL" }))),
+    sortDirection: optional(option("--sort-direction", string({ metavar: "DIR" }))),
+    source: optional(option("--source", string({ metavar: "SOURCE" }))),
+    traceId: optional(option("--trace-id", string({ metavar: "TRACE_ID" }))),
+    cursor: optional(option("--cursor", string({ metavar: "CURSOR" }))),
+    limit: optional(option("--limit", integer({ metavar: "LIMIT" }))),
+  })),
+);
+
+const appsApprovedCommands = command(
+  "approved",
+  command("list", object({
+    cmd: constant("apps-approved-list" as const),
+    teamId: optional(option("--team-id", string({ metavar: "TEAM_ID" }))),
+    enterpriseId: optional(option("--enterprise-id", string({ metavar: "ENTERPRISE_ID" }))),
+    certified: optional(option("--certified", boolValueParser)),
+    cursor: optional(option("--cursor", string({ metavar: "CURSOR" }))),
+    limit: optional(option("--limit", integer({ metavar: "LIMIT" }))),
+  })),
+);
+
+const appsRequestsCommands = command(
+  "requests",
+  or(
+    command("cancel", object({
+      cmd: constant("apps-requests-cancel" as const),
+      requestId: option("--request-id", string({ metavar: "REQUEST_ID" })),
+      teamId: optional(option("--team-id", string({ metavar: "TEAM_ID" }))),
+      enterpriseId: optional(option("--enterprise-id", string({ metavar: "ENTERPRISE_ID" }))),
+    })),
+    command("list", object({
+      cmd: constant("apps-requests-list" as const),
+      teamId: optional(option("--team-id", string({ metavar: "TEAM_ID" }))),
+      enterpriseId: optional(option("--enterprise-id", string({ metavar: "ENTERPRISE_ID" }))),
+      certified: optional(option("--certified", boolValueParser)),
+      cursor: optional(option("--cursor", string({ metavar: "CURSOR" }))),
+      limit: optional(option("--limit", integer({ metavar: "LIMIT" }))),
+    })),
+  ),
+);
+
+const appsRestrictedCommands = command(
+  "restricted",
+  command("list", object({
+    cmd: constant("apps-restricted-list" as const),
+    teamId: optional(option("--team-id", string({ metavar: "TEAM_ID" }))),
+    enterpriseId: optional(option("--enterprise-id", string({ metavar: "ENTERPRISE_ID" }))),
+    certified: optional(option("--certified", boolValueParser)),
+    cursor: optional(option("--cursor", string({ metavar: "CURSOR" }))),
+    limit: optional(option("--limit", integer({ metavar: "LIMIT" }))),
+  })),
+);
+
+const appsConfigCommands = command(
+  "config",
+  or(
+    command("lookup", object({
+      cmd: constant("apps-config-lookup" as const),
+      appIds: option("--app-ids", string({ metavar: "APP_IDS" })),
+    })),
+    command("set", object({
+      cmd: constant("apps-config-set" as const),
+      appId: option("--app-id", string({ metavar: "APP_ID" })),
+      domainRestrictions: optional(option("--domain-restrictions", string({ metavar: "JSON" }))),
+      workflowAuthStrategy: optional(option("--workflow-auth-strategy", string({ metavar: "STRATEGY" }))),
+    })),
+  ),
+);
+
+const appsCommands = command(
+  "apps",
+  or(
+    or(
+      command("approve", object({
+        cmd: constant("apps-approve" as const),
+        appId: optional(option("--app-id", string({ metavar: "APP_ID" }))),
+        requestId: optional(option("--request-id", string({ metavar: "REQUEST_ID" }))),
+        teamId: optional(option("--team-id", string({ metavar: "TEAM_ID" }))),
+        enterpriseId: optional(option("--enterprise-id", string({ metavar: "ENTERPRISE_ID" }))),
+      })),
+      command("restrict", object({
+        cmd: constant("apps-restrict" as const),
+        appId: optional(option("--app-id", string({ metavar: "APP_ID" }))),
+        requestId: optional(option("--request-id", string({ metavar: "REQUEST_ID" }))),
+        teamId: optional(option("--team-id", string({ metavar: "TEAM_ID" }))),
+        enterpriseId: optional(option("--enterprise-id", string({ metavar: "ENTERPRISE_ID" }))),
+      })),
+      command("clear-resolution", object({
+        cmd: constant("apps-clear-resolution" as const),
+        appId: option("--app-id", string({ metavar: "APP_ID" })),
+        teamId: optional(option("--team-id", string({ metavar: "TEAM_ID" }))),
+        enterpriseId: optional(option("--enterprise-id", string({ metavar: "ENTERPRISE_ID" }))),
+      })),
+      command("uninstall", object({
+        cmd: constant("apps-uninstall" as const),
+        appId: option("--app-id", string({ metavar: "APP_ID" })),
+        teamId: optional(option("--team-id", string({ metavar: "TEAM_ID" }))),
+        enterpriseId: optional(option("--enterprise-id", string({ metavar: "ENTERPRISE_ID" }))),
+      })),
+    ),
+    or(
+      appsActivitiesCommands,
+      appsApprovedCommands,
+      appsRequestsCommands,
+      appsRestrictedCommands,
+      appsConfigCommands,
+    ),
+  ),
+);
+
+// ---------------------------------------------------------------------------
+// Invite Requests commands
+// ---------------------------------------------------------------------------
+
+const inviteRequestsApprovedCommands = command(
+  "approved",
+  command("list", object({
+    cmd: constant("invite-requests-approved-list" as const),
+    teamId: option("--team-id", string({ metavar: "TEAM_ID" })),
+    cursor: optional(option("--cursor", string({ metavar: "CURSOR" }))),
+    limit: optional(option("--limit", integer({ metavar: "LIMIT" }))),
+  })),
+);
+
+const inviteRequestsDeniedCommands = command(
+  "denied",
+  command("list", object({
+    cmd: constant("invite-requests-denied-list" as const),
+    teamId: option("--team-id", string({ metavar: "TEAM_ID" })),
+    cursor: optional(option("--cursor", string({ metavar: "CURSOR" }))),
+    limit: optional(option("--limit", integer({ metavar: "LIMIT" }))),
+  })),
+);
+
+const inviteRequestsCommands = command(
+  "invite-requests",
+  or(
+    command("approve", object({
+      cmd: constant("invite-requests-approve" as const),
+      inviteRequestId: option("--invite-request-id", string({ metavar: "INVITE_REQUEST_ID" })),
+      teamId: option("--team-id", string({ metavar: "TEAM_ID" })),
+    })),
+    command("deny", object({
+      cmd: constant("invite-requests-deny" as const),
+      inviteRequestId: option("--invite-request-id", string({ metavar: "INVITE_REQUEST_ID" })),
+      teamId: option("--team-id", string({ metavar: "TEAM_ID" })),
+    })),
+    command("list", object({
+      cmd: constant("invite-requests-list" as const),
+      teamId: option("--team-id", string({ metavar: "TEAM_ID" })),
+      cursor: optional(option("--cursor", string({ metavar: "CURSOR" }))),
+      limit: optional(option("--limit", integer({ metavar: "LIMIT" }))),
+    })),
+    inviteRequestsApprovedCommands,
+    inviteRequestsDeniedCommands,
+  ),
+);
+
+// ---------------------------------------------------------------------------
+// Workflows commands
+// ---------------------------------------------------------------------------
+
+const workflowsPermissionsCommands = command(
+  "permissions",
+  command("lookup", object({
+    cmd: constant("workflows-permissions-lookup" as const),
+    workflowIds: option("--workflow-ids", string({ metavar: "WORKFLOW_IDS" })),
+    maxWorkflowTriggers: optional(option("--max-workflow-triggers", integer({ metavar: "COUNT" }))),
+  })),
+);
+
+const workflowsCollaboratorsCommands = command(
+  "collaborators",
+  or(
+    command("add", object({
+      cmd: constant("workflows-collaborators-add" as const),
+      collaboratorIds: option("--collaborator-ids", string({ metavar: "USER_IDS" })),
+      workflowIds: option("--workflow-ids", string({ metavar: "WORKFLOW_IDS" })),
+    })),
+    command("remove", object({
+      cmd: constant("workflows-collaborators-remove" as const),
+      collaboratorIds: option("--collaborator-ids", string({ metavar: "USER_IDS" })),
+      workflowIds: option("--workflow-ids", string({ metavar: "WORKFLOW_IDS" })),
+    })),
+  ),
+);
+
+const workflowsCommands = command(
+  "workflows",
+  or(
+    command("search", object({
+      cmd: constant("workflows-search" as const),
+      appId: optional(option("--app-id", string({ metavar: "APP_ID" }))),
+      collaboratorIds: optional(option("--collaborator-ids", string({ metavar: "USER_IDS" }))),
+      noCollaborators: optional(option("--no-collaborators", boolValueParser)),
+      numTriggerIds: optional(option("--num-trigger-ids", integer({ metavar: "COUNT" }))),
+      query: optional(option("--query", string({ metavar: "QUERY" }))),
+      sort: optional(option("--sort", string({ metavar: "SORT" }))),
+      source: optional(option("--source", string({ metavar: "SOURCE" }))),
+      sortDir: optional(option("--sort-dir", string({ metavar: "DIR" }))),
+      cursor: optional(option("--cursor", string({ metavar: "CURSOR" }))),
+      limit: optional(option("--limit", integer({ metavar: "LIMIT" }))),
+    })),
+    command("unpublish", object({
+      cmd: constant("workflows-unpublish" as const),
+      workflowIds: option("--workflow-ids", string({ metavar: "WORKFLOW_IDS" })),
+    })),
+    workflowsPermissionsCommands,
+    workflowsCollaboratorsCommands,
+  ),
+);
+
+// ---------------------------------------------------------------------------
+// Functions commands
+// ---------------------------------------------------------------------------
+
+const functionsPermissionsCommands = command(
+  "permissions",
+  or(
+    command("lookup", object({
+      cmd: constant("functions-permissions-lookup" as const),
+      functionIds: option("--function-ids", string({ metavar: "FUNCTION_IDS" })),
+    })),
+    command("set", object({
+      cmd: constant("functions-permissions-set" as const),
+      functionId: option("--function-id", string({ metavar: "FUNCTION_ID" })),
+      visibility: option("--visibility", string({ metavar: "VISIBILITY" })),
+      userIds: optional(option("--user-ids", string({ metavar: "USER_IDS" }))),
+    })),
+  ),
+);
+
+const functionsCommands = command(
+  "functions",
+  or(
+    command("list", object({
+      cmd: constant("functions-list" as const),
+      appIds: option("--app-ids", string({ metavar: "APP_IDS" })),
+      teamId: optional(option("--team-id", string({ metavar: "TEAM_ID" }))),
+      cursor: optional(option("--cursor", string({ metavar: "CURSOR" }))),
+      limit: optional(option("--limit", integer({ metavar: "LIMIT" }))),
+    })),
+    functionsPermissionsCommands,
+  ),
+);
+
+// ---------------------------------------------------------------------------
 // Root parser
 // ---------------------------------------------------------------------------
 
-const rootParser = or(tokenCommands, teamsCommands, usersCommands, conversationsCommands);
+const rootParser = or(
+  or(tokenCommands, teamsCommands, usersCommands),
+  or(conversationsCommands, appsCommands),
+  or(inviteRequestsCommands, workflowsCommands, functionsCommands),
+);
 
 // ---------------------------------------------------------------------------
 // Main
@@ -890,6 +1183,319 @@ switch (config.cmd) {
       limit: config.limit,
     });
     console.log(JSON.stringify(ekmResult, null, 2));
+    break;
+  }
+  case "apps-approve": {
+    const client = await createSlackClient(store, profileFlag);
+    await executeAppsApprove(client, {
+      appId: config.appId,
+      requestId: config.requestId,
+      teamId: config.teamId,
+      enterpriseId: config.enterpriseId,
+    });
+    console.log("App approved.");
+    break;
+  }
+  case "apps-restrict": {
+    const client = await createSlackClient(store, profileFlag);
+    await executeAppsRestrict(client, {
+      appId: config.appId,
+      requestId: config.requestId,
+      teamId: config.teamId,
+      enterpriseId: config.enterpriseId,
+    });
+    console.log("App restricted.");
+    break;
+  }
+  case "apps-clear-resolution": {
+    const client = await createSlackClient(store, profileFlag);
+    await executeAppsClearResolution(client, {
+      appId: config.appId,
+      teamId: config.teamId,
+      enterpriseId: config.enterpriseId,
+    });
+    console.log("App resolution cleared.");
+    break;
+  }
+  case "apps-uninstall": {
+    const client = await createSlackClient(store, profileFlag);
+    await executeAppsUninstall(client, {
+      appId: config.appId,
+      teamId: config.teamId,
+      enterpriseId: config.enterpriseId,
+    });
+    console.log("App uninstalled.");
+    break;
+  }
+  case "apps-activities-list": {
+    const client = await createSlackClient(store, profileFlag);
+    const activities = await executeAppsActivitiesList(client, {
+      appId: config.appId,
+      teamId: config.teamId,
+      componentId: config.componentId,
+      componentType: config.componentType,
+      logEventType: config.logEventType,
+      maxDateCreated: config.maxDateCreated,
+      minDateCreated: config.minDateCreated,
+      minLogLevel: config.minLogLevel,
+      sortDirection: config.sortDirection,
+      source: config.source,
+      traceId: config.traceId,
+      cursor: config.cursor,
+      limit: config.limit,
+    });
+    console.log(JSON.stringify(activities, null, 2));
+    break;
+  }
+  case "apps-approved-list": {
+    const client = await createSlackClient(store, profileFlag);
+    const approvedApps = await executeAppsApprovedList(client, {
+      teamId: config.teamId,
+      enterpriseId: config.enterpriseId,
+      certified: config.certified,
+      cursor: config.cursor,
+      limit: config.limit,
+    });
+    console.log(JSON.stringify(approvedApps, null, 2));
+    break;
+  }
+  case "apps-requests-cancel": {
+    const client = await createSlackClient(store, profileFlag);
+    await executeAppsRequestsCancel(client, {
+      requestId: config.requestId,
+      teamId: config.teamId,
+      enterpriseId: config.enterpriseId,
+    });
+    console.log("App request cancelled.");
+    break;
+  }
+  case "apps-requests-list": {
+    const client = await createSlackClient(store, profileFlag);
+    const appRequests = await executeAppsRequestsList(client, {
+      teamId: config.teamId,
+      enterpriseId: config.enterpriseId,
+      certified: config.certified,
+      cursor: config.cursor,
+      limit: config.limit,
+    });
+    console.log(JSON.stringify(appRequests, null, 2));
+    break;
+  }
+  case "apps-restricted-list": {
+    const client = await createSlackClient(store, profileFlag);
+    const restrictedApps = await executeAppsRestrictedList(client, {
+      teamId: config.teamId,
+      enterpriseId: config.enterpriseId,
+      certified: config.certified,
+      cursor: config.cursor,
+      limit: config.limit,
+    });
+    console.log(JSON.stringify(restrictedApps, null, 2));
+    break;
+  }
+  case "apps-config-lookup": {
+    const client = await createSlackClient(store, profileFlag);
+    const configs = await executeAppsConfigLookup(client, {
+      appIds: config.appIds.split(","),
+    });
+    console.log(JSON.stringify(configs, null, 2));
+    break;
+  }
+  case "apps-config-set": {
+    const client = await createSlackClient(store, profileFlag);
+    await executeAppsConfigSet(client, {
+      appId: config.appId,
+      domainRestrictions: config.domainRestrictions !== undefined
+        ? JSON.parse(config.domainRestrictions)
+        : undefined,
+      workflowAuthStrategy: config.workflowAuthStrategy,
+    });
+    console.log("App config updated.");
+    break;
+  }
+  case "invite-requests-approve": {
+    const client = await createSlackClient(store, profileFlag);
+    await executeInviteRequestsApprove(client, {
+      inviteRequestId: config.inviteRequestId,
+      teamId: config.teamId,
+    });
+    console.log("Invite request approved.");
+    break;
+  }
+  case "invite-requests-deny": {
+    const client = await createSlackClient(store, profileFlag);
+    await executeInviteRequestsDeny(client, {
+      inviteRequestId: config.inviteRequestId,
+      teamId: config.teamId,
+    });
+    console.log("Invite request denied.");
+    break;
+  }
+  case "invite-requests-list": {
+    const client = await createSlackClient(store, profileFlag);
+    const inviteRequests = await executeInviteRequestsList(client, {
+      teamId: config.teamId,
+      cursor: config.cursor,
+      limit: config.limit,
+    });
+    console.log(JSON.stringify(inviteRequests, null, 2));
+    break;
+  }
+  case "invite-requests-approved-list": {
+    const client = await createSlackClient(store, profileFlag);
+    const approvedRequests = await executeInviteRequestsApprovedList(client, {
+      teamId: config.teamId,
+      cursor: config.cursor,
+      limit: config.limit,
+    });
+    console.log(JSON.stringify(approvedRequests, null, 2));
+    break;
+  }
+  case "invite-requests-denied-list": {
+    const client = await createSlackClient(store, profileFlag);
+    const deniedRequests = await executeInviteRequestsDeniedList(client, {
+      teamId: config.teamId,
+      cursor: config.cursor,
+      limit: config.limit,
+    });
+    console.log(JSON.stringify(deniedRequests, null, 2));
+    break;
+  }
+  case "workflows-search": {
+    const client = await createSlackClient(store, profileFlag);
+    const searchCollaboratorIds = config.collaboratorIds?.split(",");
+    let workflowsSearchCollaborators: [string, ...string[]] | undefined;
+    if (searchCollaboratorIds !== undefined) {
+      const first = searchCollaboratorIds[0];
+      if (first === undefined) {
+        throw new Error("--collaborator-ids must not be empty");
+      }
+      workflowsSearchCollaborators = [first, ...searchCollaboratorIds.slice(1)];
+    }
+    const workflows = await executeWorkflowsSearch(client, {
+      appId: config.appId,
+      collaboratorIds: workflowsSearchCollaborators,
+      noCollaborators: config.noCollaborators,
+      numTriggerIds: config.numTriggerIds,
+      query: config.query,
+      sort: config.sort,
+      source: config.source,
+      sortDir: config.sortDir,
+      cursor: config.cursor,
+      limit: config.limit,
+    });
+    console.log(JSON.stringify(workflows, null, 2));
+    break;
+  }
+  case "workflows-unpublish": {
+    const client = await createSlackClient(store, profileFlag);
+    const unpublishParts = config.workflowIds.split(",");
+    const unpublishFirst = unpublishParts[0];
+    if (unpublishFirst === undefined) {
+      throw new Error("--workflow-ids must not be empty");
+    }
+    const unpublishWorkflowIds: [string, ...string[]] = [unpublishFirst, ...unpublishParts.slice(1)];
+    await executeWorkflowsUnpublish(client, { workflowIds: unpublishWorkflowIds });
+    console.log("Workflows unpublished.");
+    break;
+  }
+  case "workflows-permissions-lookup": {
+    const client = await createSlackClient(store, profileFlag);
+    const permLookupParts = config.workflowIds.split(",");
+    const permLookupFirst = permLookupParts[0];
+    if (permLookupFirst === undefined) {
+      throw new Error("--workflow-ids must not be empty");
+    }
+    const permLookupWorkflowIds: [string, ...string[]] = [permLookupFirst, ...permLookupParts.slice(1)];
+    const permissions = await executeWorkflowsPermissionsLookup(client, {
+      workflowIds: permLookupWorkflowIds,
+      maxWorkflowTriggers: config.maxWorkflowTriggers,
+    });
+    console.log(JSON.stringify(permissions, null, 2));
+    break;
+  }
+  case "workflows-collaborators-add": {
+    const client = await createSlackClient(store, profileFlag);
+    const addCollabParts = config.collaboratorIds.split(",");
+    const addCollabFirst = addCollabParts[0];
+    if (addCollabFirst === undefined) {
+      throw new Error("--collaborator-ids must not be empty");
+    }
+    const addCollaboratorIds: [string, ...string[]] = [addCollabFirst, ...addCollabParts.slice(1)];
+    const addWfParts = config.workflowIds.split(",");
+    const addWfFirst = addWfParts[0];
+    if (addWfFirst === undefined) {
+      throw new Error("--workflow-ids must not be empty");
+    }
+    const addWorkflowIds: [string, ...string[]] = [addWfFirst, ...addWfParts.slice(1)];
+    await executeWorkflowsCollaboratorsAdd(client, {
+      collaboratorIds: addCollaboratorIds,
+      workflowIds: addWorkflowIds,
+    });
+    console.log("Collaborators added to workflows.");
+    break;
+  }
+  case "workflows-collaborators-remove": {
+    const client = await createSlackClient(store, profileFlag);
+    const rmCollabParts = config.collaboratorIds.split(",");
+    const rmCollabFirst = rmCollabParts[0];
+    if (rmCollabFirst === undefined) {
+      throw new Error("--collaborator-ids must not be empty");
+    }
+    const rmCollaboratorIds: [string, ...string[]] = [rmCollabFirst, ...rmCollabParts.slice(1)];
+    const rmWfParts = config.workflowIds.split(",");
+    const rmWfFirst = rmWfParts[0];
+    if (rmWfFirst === undefined) {
+      throw new Error("--workflow-ids must not be empty");
+    }
+    const rmWorkflowIds: [string, ...string[]] = [rmWfFirst, ...rmWfParts.slice(1)];
+    await executeWorkflowsCollaboratorsRemove(client, {
+      collaboratorIds: rmCollaboratorIds,
+      workflowIds: rmWorkflowIds,
+    });
+    console.log("Collaborators removed from workflows.");
+    break;
+  }
+  case "functions-list": {
+    const client = await createSlackClient(store, profileFlag);
+    const functions = await executeFunctionsList(client, {
+      appIds: config.appIds.split(","),
+      teamId: config.teamId,
+      cursor: config.cursor,
+      limit: config.limit,
+    });
+    console.log(JSON.stringify(functions, null, 2));
+    break;
+  }
+  case "functions-permissions-lookup": {
+    const client = await createSlackClient(store, profileFlag);
+    const fnLookupParts = config.functionIds.split(",");
+    const fnLookupFirst = fnLookupParts[0];
+    if (fnLookupFirst === undefined) {
+      throw new Error("--function-ids must not be empty");
+    }
+    const fnLookupIds: [string, ...string[]] = [fnLookupFirst, ...fnLookupParts.slice(1)];
+    const fnPermissions = await executeFunctionsPermissionsLookup(client, { functionIds: fnLookupIds });
+    console.log(JSON.stringify(fnPermissions, null, 2));
+    break;
+  }
+  case "functions-permissions-set": {
+    const client = await createSlackClient(store, profileFlag);
+    let fnSetUserIds: [string, ...string[]] | undefined;
+    if (config.userIds !== undefined) {
+      const fnSetParts = config.userIds.split(",");
+      const fnSetFirst = fnSetParts[0];
+      if (fnSetFirst === undefined) {
+        throw new Error("--user-ids must not be empty");
+      }
+      fnSetUserIds = [fnSetFirst, ...fnSetParts.slice(1)];
+    }
+    await executeFunctionsPermissionsSet(client, {
+      functionId: config.functionId,
+      visibility: config.visibility,
+      userIds: fnSetUserIds,
+    });
+    console.log("Function permissions updated.");
     break;
   }
   default: {

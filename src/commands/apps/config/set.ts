@@ -13,5 +13,5 @@ export async function executeAppsConfigSet(
   const params: Record<string, unknown> = { app_id: opts.appId };
   if (opts.domainRestrictions !== undefined) params.domain_restrictions = opts.domainRestrictions;
   if (opts.workflowAuthStrategy !== undefined) params.workflow_auth_strategy = opts.workflowAuthStrategy;
-  await client.admin.apps.config.set(params);
+  await client.apiCall("admin.apps.config.set", params);
 }

@@ -3,11 +3,11 @@ import { executeAppsRequestsCancel } from "../../../../src/commands/apps/request
 
 describe("apps requests cancel", () => {
   test("calls admin.apps.requests.cancel with correct params", async () => {
-    const mockCancel = mock(() => Promise.resolve({ ok: true }));
-    const client = { admin: { apps: { requests: { cancel: mockCancel } } } } as any;
+    const mockApiCall = mock(() => Promise.resolve({ ok: true }));
+    const client = { apiCall: mockApiCall } as any;
 
     await executeAppsRequestsCancel(client, { requestId: "R1", teamId: "T1" });
 
-    expect(mockCancel).toHaveBeenCalledWith({ request_id: "R1", team_id: "T1" });
+    expect(mockApiCall).toHaveBeenCalledWith("admin.apps.requests.cancel", { request_id: "R1", team_id: "T1" });
   });
 });

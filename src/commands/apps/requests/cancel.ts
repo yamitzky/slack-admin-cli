@@ -13,5 +13,5 @@ export async function executeAppsRequestsCancel(
   const params: Record<string, unknown> = { request_id: opts.requestId };
   if (opts.teamId !== undefined) params.team_id = opts.teamId;
   if (opts.enterpriseId !== undefined) params.enterprise_id = opts.enterpriseId;
-  await client.admin.apps.requests.cancel(params);
+  await client.apiCall("admin.apps.requests.cancel", params);
 }

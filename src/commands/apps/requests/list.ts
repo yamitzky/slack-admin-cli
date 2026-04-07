@@ -12,13 +12,19 @@ export async function executeAppsRequestsList(
   client: WebClient,
   opts: AppsRequestsListOptions,
 ) {
-  const params: Record<string, unknown> = {};
-  if (opts.teamId !== undefined) params.team_id = opts.teamId;
-  if (opts.enterpriseId !== undefined) params.enterprise_id = opts.enterpriseId;
-  if (opts.certified !== undefined) params.certified = opts.certified;
-  if (opts.cursor !== undefined) params.cursor = opts.cursor;
-  if (opts.limit !== undefined) params.limit = opts.limit;
+  const base = {
+    ...(opts.certified !== undefined ? { certified: opts.certified } : {}),
+    ...(opts.cursor !== undefined ? { cursor: opts.cursor } : {}),
+    ...(opts.limit !== undefined ? { limit: opts.limit } : {}),
+  };
 
-  const response = await client.admin.apps.requests.list(params);
-  return response.app_requests ?? [];
+  if (opts.teamId !== undefined) {
+    const response = await client.admin.apps.requests.list({ ...base, team_id: opts.teamId });
+    return response.app_requests ?? [];
+  }
+  if (opts.enterpriseId !== undefined) {
+    const response = await client.admin.apps.requests.list({ ...base, enterprise_id: opts.enterpriseId });
+    return response.app_requests ?? [];
+  }
+  throw new Error("Either --team-id or --enterprise-id must be provided.");
 }

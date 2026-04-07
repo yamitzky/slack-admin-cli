@@ -16,5 +16,5 @@ export async function executeAppsRestrict(
   if (opts.requestId !== undefined) params.request_id = opts.requestId;
   if (opts.teamId !== undefined) params.team_id = opts.teamId;
   if (opts.enterpriseId !== undefined) params.enterprise_id = opts.enterpriseId;
-  await client.admin.apps.restrict(params);
+  await client.apiCall("admin.apps.restrict", params);
 }

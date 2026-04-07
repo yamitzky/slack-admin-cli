@@ -13,5 +13,5 @@ export async function executeAppsUninstall(
   const params: Record<string, unknown> = { app_id: opts.appId };
   if (opts.teamId !== undefined) params.team_id = opts.teamId;
   if (opts.enterpriseId !== undefined) params.enterprise_id = opts.enterpriseId;
-  await client.admin.apps.uninstall(params);
+  await client.apiCall("admin.apps.uninstall", params);
 }
