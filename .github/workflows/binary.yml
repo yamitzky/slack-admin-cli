@@ -1,0 +1,35 @@
+name: Build Binaries
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - target: bun-darwin-arm64
+            artifact: sladm-darwin-arm64
+          - target: bun-darwin-x64
+            artifact: sladm-darwin-x64
+          - target: bun-linux-x64
+            artifact: sladm-linux-x64
+          - target: bun-linux-arm64
+            artifact: sladm-linux-arm64
+          - target: bun-windows-x64
+            artifact: sladm-windows-x64.exe
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile
+      - name: Build binary
+        run: bun build --compile --minify --sourcemap --bytecode --target ${{ matrix.target }} ./src/index.ts --outfile ${{ matrix.artifact }}
+      - name: Upload release asset
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ${{ matrix.artifact }}
