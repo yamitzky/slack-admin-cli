@@ -1,4 +1,4 @@
-# sladm — Slack Admin in your terminal.
+# sladm — Slack Admin CLI for humans and AI agents
 
 CLI & Agent Skill for managing Slack Enterprise Grid / Business+ workspaces via `admin.*` APIs.
 
