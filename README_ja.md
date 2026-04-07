@@ -17,15 +17,15 @@ Slack Enterprise Grid / Business+ ワークスペースの `admin.*` API を操�
 ## Installation
 
 ```bash
-npm install -g sladm
+npm install -g sladm-cli
 # or
-bun install -g sladm
+bun install -g sladm-cli
 ```
 
 インストールせずに直接実行:
 
 ```bash
-npx sladm --help
+npx sladm-cli --help
 ```
 
 ### ビルド済みバイナリ

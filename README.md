@@ -17,15 +17,15 @@ CLI & Agent Skill for managing Slack Enterprise Grid / Business+ workspaces via 
 ## Installation
 
 ```bash
-npm install -g sladm
+npm install -g sladm-cli
 # or
-bun install -g sladm
+bun install -g sladm-cli
 ```
 
 Or run directly without installing:
 
 ```bash
-npx sladm --help
+npx sladm-cli --help
 ```
 
 ### Pre-built Binaries
