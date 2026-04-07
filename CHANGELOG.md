@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.3](https://github.com/yamitzky/slack-admin-cli/compare/sladm-cli-v0.2.2...sladm-cli-v0.2.3) (2026-04-07)
+
+
+### Bug Fixes
+
+* use Node 24 for npm OIDC trusted publishing support ([9052734](https://github.com/yamitzky/slack-admin-cli/commit/90527347a5310bbe4120503167d203b5e0852181))
+
 ## [0.2.2](https://github.com/yamitzky/slack-admin-cli/compare/sladm-cli-v0.2.1...sladm-cli-v0.2.2) (2026-04-07)
 
 
