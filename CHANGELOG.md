@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.2](https://github.com/yamitzky/slack-admin-cli/compare/sladm-cli-v0.2.1...sladm-cli-v0.2.2) (2026-04-07)
+
+
+### Bug Fixes
+
+* remove registry-url from setup-node to allow OIDC auth ([339068a](https://github.com/yamitzky/slack-admin-cli/commit/339068ad82427704aefac3f5dd4578b1e6025549))
+
 ## [0.2.1](https://github.com/yamitzky/slack-admin-cli/compare/sladm-cli-v0.2.0...sladm-cli-v0.2.1) (2026-04-07)
 
 
