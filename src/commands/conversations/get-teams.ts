@@ -10,11 +10,10 @@ export async function executeConversationsGetTeams(
   client: WebClient,
   opts: ConversationsGetTeamsOptions,
 ): Promise<string[]> {
-  const params: Record<string, unknown> = { channel_id: opts.channelId };
-  if (opts.cursor !== undefined) params.cursor = opts.cursor;
-  if (opts.limit !== undefined) params.limit = opts.limit;
-
-  const response = await client.admin.conversations.getTeams(params);
-  const teams: string[] = response.teams ?? [];
-  return teams;
+  const response = await client.admin.conversations.getTeams({
+    channel_id: opts.channelId,
+    ...(opts.cursor !== undefined ? { cursor: opts.cursor } : {}),
+    ...(opts.limit !== undefined ? { limit: opts.limit } : {}),
+  });
+  return response.team_ids ?? [];
 }

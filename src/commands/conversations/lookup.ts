@@ -1,7 +1,7 @@
 import type { WebClient } from "@slack/web-api";
 
 interface ConversationsLookupOptions {
-  teamIds: string[];
+  teamIds: [string, ...string[]];
   lastMessageActivityBefore: number;
   maxMemberCount?: number;
   cursor?: string;
@@ -12,14 +12,12 @@ export async function executeConversationsLookup(
   client: WebClient,
   opts: ConversationsLookupOptions,
 ) {
-  const params: Record<string, unknown> = {
+  const response = await client.admin.conversations.lookup({
     team_ids: opts.teamIds,
     last_message_activity_before: opts.lastMessageActivityBefore,
-  };
-  if (opts.maxMemberCount !== undefined) params.max_member_count = opts.maxMemberCount;
-  if (opts.cursor !== undefined) params.cursor = opts.cursor;
-  if (opts.limit !== undefined) params.limit = opts.limit;
-
-  const response = await client.admin.conversations.lookup(params);
-  return response.channels ?? [];
+    ...(opts.maxMemberCount !== undefined ? { max_member_count: opts.maxMemberCount } : {}),
+    ...(opts.cursor !== undefined ? { cursor: opts.cursor } : {}),
+    ...(opts.limit !== undefined ? { limit: opts.limit } : {}),
+  });
+  return response.channel_ids ?? [];
 }

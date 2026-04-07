@@ -3,7 +3,7 @@ import { executeConversationsSetTeams } from "../../../src/commands/conversation
 
 describe("conversations set-teams", () => {
   test("executes when no workspaces would be disconnected", async () => {
-    const mockGetTeams = mock(() => Promise.resolve({ ok: true, teams: ["T1", "T2"] }));
+    const mockGetTeams = mock(() => Promise.resolve({ ok: true, team_ids: ["T1", "T2"] }));
     const mockSetTeams = mock(() => Promise.resolve({ ok: true }));
     const client = {
       admin: { conversations: { getTeams: mockGetTeams, setTeams: mockSetTeams } },
@@ -22,7 +22,7 @@ describe("conversations set-teams", () => {
   });
 
   test("throws when workspaces would be disconnected and allowDisconnect is false", async () => {
-    const mockGetTeams = mock(() => Promise.resolve({ ok: true, teams: ["T1", "T2", "T3"] }));
+    const mockGetTeams = mock(() => Promise.resolve({ ok: true, team_ids: ["T1", "T2", "T3"] }));
     const mockSetTeams = mock(() => Promise.resolve({ ok: true }));
     const client = {
       admin: { conversations: { getTeams: mockGetTeams, setTeams: mockSetTeams } },
@@ -40,7 +40,7 @@ describe("conversations set-teams", () => {
   });
 
   test("executes when allowDisconnect is true even with disconnections", async () => {
-    const mockGetTeams = mock(() => Promise.resolve({ ok: true, teams: ["T1", "T2", "T3"] }));
+    const mockGetTeams = mock(() => Promise.resolve({ ok: true, team_ids: ["T1", "T2", "T3"] }));
     const mockSetTeams = mock(() => Promise.resolve({ ok: true }));
     const client = {
       admin: { conversations: { getTeams: mockGetTeams, setTeams: mockSetTeams } },
@@ -59,7 +59,7 @@ describe("conversations set-teams", () => {
   });
 
   test("skips disconnect check when org_channel is true", async () => {
-    const mockGetTeams = mock(() => Promise.resolve({ ok: true, teams: ["T1", "T2"] }));
+    const mockGetTeams = mock(() => Promise.resolve({ ok: true, team_ids: ["T1", "T2"] }));
     const mockSetTeams = mock(() => Promise.resolve({ ok: true }));
     const client = {
       admin: { conversations: { getTeams: mockGetTeams, setTeams: mockSetTeams } },
@@ -79,7 +79,7 @@ describe("conversations set-teams", () => {
   });
 
   test("passes optional team_id", async () => {
-    const mockGetTeams = mock(() => Promise.resolve({ ok: true, teams: ["T1"] }));
+    const mockGetTeams = mock(() => Promise.resolve({ ok: true, team_ids: ["T1"] }));
     const mockSetTeams = mock(() => Promise.resolve({ ok: true }));
     const client = {
       admin: { conversations: { getTeams: mockGetTeams, setTeams: mockSetTeams } },

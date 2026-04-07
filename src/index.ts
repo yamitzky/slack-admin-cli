@@ -28,6 +28,32 @@ import { executeUsersSetOwner } from "./commands/users/set-owner";
 import { executeUsersSetRegular } from "./commands/users/set-regular";
 import { executeSessionReset } from "./commands/users/session-reset";
 
+import { executeConversationsArchive } from "./commands/conversations/archive";
+import { executeConversationsUnarchive } from "./commands/conversations/unarchive";
+import { executeConversationsDelete } from "./commands/conversations/delete";
+import { executeConversationsRename } from "./commands/conversations/rename";
+import { executeConversationsConvertToPrivate } from "./commands/conversations/convert-to-private";
+import { executeConversationsConvertToPublic } from "./commands/conversations/convert-to-public";
+import { executeConversationsCreate } from "./commands/conversations/create";
+import { executeConversationsSearch } from "./commands/conversations/search";
+import { executeConversationsInvite } from "./commands/conversations/invite";
+import { executeConversationsLookup } from "./commands/conversations/lookup";
+import { executeConversationsGetPrefs } from "./commands/conversations/get-prefs";
+import { executeConversationsSetPrefs } from "./commands/conversations/set-prefs";
+import { executeConversationsGetCustomRetention } from "./commands/conversations/get-custom-retention";
+import { executeConversationsSetCustomRetention } from "./commands/conversations/set-custom-retention";
+import { executeConversationsRemoveCustomRetention } from "./commands/conversations/remove-custom-retention";
+import { executeConversationsGetTeams } from "./commands/conversations/get-teams";
+import { executeConversationsSetTeams } from "./commands/conversations/set-teams";
+import { executeConversationsDisconnectShared } from "./commands/conversations/disconnect-shared";
+import { executeConversationsBulkArchive } from "./commands/conversations/bulk-archive";
+import { executeConversationsBulkDelete } from "./commands/conversations/bulk-delete";
+import { executeConversationsBulkMove } from "./commands/conversations/bulk-move";
+import { executeRestrictAccessAddGroup } from "./commands/conversations/restrict-access/add-group";
+import { executeRestrictAccessListGroups } from "./commands/conversations/restrict-access/list-groups";
+import { executeRestrictAccessRemoveGroup } from "./commands/conversations/restrict-access/remove-group";
+import { executeEkmListOriginalConnectedChannelInfo } from "./commands/conversations/ekm/list-original-connected-channel-info";
+
 import { ProfileStore } from "./config";
 import { createSlackClient } from "./client";
 import { formatOutput, type OutputFormat } from "./output";
@@ -239,10 +265,175 @@ const usersCommands = command(
 );
 
 // ---------------------------------------------------------------------------
+// Conversations commands
+// ---------------------------------------------------------------------------
+
+const conversationsRestrictAccessCommands = command(
+  "restrict-access",
+  or(
+    command("add-group", object({
+      cmd: constant("conversations-restrict-access-add-group" as const),
+      channelId: option("--channel-id", string({ metavar: "CHANNEL_ID" })),
+      groupId: option("--group-id", string({ metavar: "GROUP_ID" })),
+      teamId: optional(option("--team-id", string({ metavar: "TEAM_ID" }))),
+    })),
+    command("list-groups", object({
+      cmd: constant("conversations-restrict-access-list-groups" as const),
+      channelId: option("--channel-id", string({ metavar: "CHANNEL_ID" })),
+      teamId: optional(option("--team-id", string({ metavar: "TEAM_ID" }))),
+    })),
+    command("remove-group", object({
+      cmd: constant("conversations-restrict-access-remove-group" as const),
+      channelId: option("--channel-id", string({ metavar: "CHANNEL_ID" })),
+      groupId: option("--group-id", string({ metavar: "GROUP_ID" })),
+      teamId: optional(option("--team-id", string({ metavar: "TEAM_ID" }))),
+    })),
+  ),
+);
+
+const conversationsEkmCommands = command(
+  "ekm",
+  command("list-original-connected-channel-info", object({
+    cmd: constant("conversations-ekm-list-original-connected-channel-info" as const),
+    teamIds: optional(option("--team-ids", string({ metavar: "TEAM_IDS" }))),
+    channelIds: optional(option("--channel-ids", string({ metavar: "CHANNEL_IDS" }))),
+    cursor: optional(option("--cursor", string({ metavar: "CURSOR" }))),
+    limit: optional(option("--limit", integer({ metavar: "LIMIT" }))),
+  })),
+);
+
+const conversationsCommands = command(
+  "conversations",
+  or(
+    or(
+      command("create", object({
+        cmd: constant("conversations-create" as const),
+        name: option("--name", string({ metavar: "NAME" })),
+        isPrivate: option("--is-private", boolValueParser),
+        teamId: optional(option("--team-id", string({ metavar: "TEAM_ID" }))),
+        orgWide: optional(option("--org-wide", boolValueParser)),
+        description: optional(option("--description", string({ metavar: "DESCRIPTION" }))),
+      })),
+      command("delete", object({
+        cmd: constant("conversations-delete" as const),
+        channelId: option("--channel-id", string({ metavar: "CHANNEL_ID" })),
+      })),
+      command("archive", object({
+        cmd: constant("conversations-archive" as const),
+        channelId: option("--channel-id", string({ metavar: "CHANNEL_ID" })),
+      })),
+      command("unarchive", object({
+        cmd: constant("conversations-unarchive" as const),
+        channelId: option("--channel-id", string({ metavar: "CHANNEL_ID" })),
+      })),
+      command("rename", object({
+        cmd: constant("conversations-rename" as const),
+        channelId: option("--channel-id", string({ metavar: "CHANNEL_ID" })),
+        name: option("--name", string({ metavar: "NAME" })),
+      })),
+      command("search", object({
+        cmd: constant("conversations-search" as const),
+        query: optional(option("--query", string({ metavar: "QUERY" }))),
+        teamIds: optional(option("--team-ids", string({ metavar: "TEAM_IDS" }))),
+        connectedTeamIds: optional(option("--connected-team-ids", string({ metavar: "TEAM_IDS" }))),
+        searchChannelTypes: optional(option("--search-channel-types", string({ metavar: "TYPES" }))),
+        sort: optional(option("--sort", string({ metavar: "SORT" }))),
+        sortDir: optional(option("--sort-dir", string({ metavar: "DIR" }))),
+        totalCountOnly: optional(option("--total-count-only", boolValueParser)),
+        cursor: optional(option("--cursor", string({ metavar: "CURSOR" }))),
+        limit: optional(option("--limit", integer({ metavar: "LIMIT" }))),
+      })),
+      command("invite", object({
+        cmd: constant("conversations-invite" as const),
+        channelId: option("--channel-id", string({ metavar: "CHANNEL_ID" })),
+        userIds: option("--user-ids", string({ metavar: "USER_IDS" })),
+      })),
+      command("convert-to-private", object({
+        cmd: constant("conversations-convert-to-private" as const),
+        channelId: option("--channel-id", string({ metavar: "CHANNEL_ID" })),
+        name: optional(option("--name", string({ metavar: "NAME" }))),
+      })),
+      command("convert-to-public", object({
+        cmd: constant("conversations-convert-to-public" as const),
+        channelId: option("--channel-id", string({ metavar: "CHANNEL_ID" })),
+      })),
+      command("get-teams", object({
+        cmd: constant("conversations-get-teams" as const),
+        channelId: option("--channel-id", string({ metavar: "CHANNEL_ID" })),
+        cursor: optional(option("--cursor", string({ metavar: "CURSOR" }))),
+        limit: optional(option("--limit", integer({ metavar: "LIMIT" }))),
+      })),
+    ),
+    or(
+      command("set-teams", object({
+        cmd: constant("conversations-set-teams" as const),
+        channelId: option("--channel-id", string({ metavar: "CHANNEL_ID" })),
+        teamIds: optional(option("--team-ids", string({ metavar: "TEAM_IDS" }))),
+        teamId: optional(option("--team-id", string({ metavar: "TEAM_ID" }))),
+        orgChannel: optional(option("--org-channel", boolValueParser)),
+        allowDisconnect: optional(option("--allow-disconnect", boolValueParser)),
+      })),
+      command("disconnect-shared", object({
+        cmd: constant("conversations-disconnect-shared" as const),
+        channelId: option("--channel-id", string({ metavar: "CHANNEL_ID" })),
+        leavingTeamIds: optional(option("--leaving-team-ids", string({ metavar: "TEAM_IDS" }))),
+      })),
+      command("get-prefs", object({
+        cmd: constant("conversations-get-prefs" as const),
+        channelId: option("--channel-id", string({ metavar: "CHANNEL_ID" })),
+      })),
+      command("set-prefs", object({
+        cmd: constant("conversations-set-prefs" as const),
+        channelId: option("--channel-id", string({ metavar: "CHANNEL_ID" })),
+        prefs: option("--prefs", string({ metavar: "PREFS_JSON" })),
+      })),
+      command("lookup", object({
+        cmd: constant("conversations-lookup" as const),
+        teamIds: option("--team-ids", string({ metavar: "TEAM_IDS" })),
+        lastMessageActivityBefore: option("--last-message-activity-before", integer({ metavar: "TIMESTAMP" })),
+        maxMemberCount: optional(option("--max-member-count", integer({ metavar: "COUNT" }))),
+        cursor: optional(option("--cursor", string({ metavar: "CURSOR" }))),
+        limit: optional(option("--limit", integer({ metavar: "LIMIT" }))),
+      })),
+      command("bulk-archive", object({
+        cmd: constant("conversations-bulk-archive" as const),
+        channelIds: option("--channel-ids", string({ metavar: "CHANNEL_IDS" })),
+      })),
+      command("bulk-delete", object({
+        cmd: constant("conversations-bulk-delete" as const),
+        channelIds: option("--channel-ids", string({ metavar: "CHANNEL_IDS" })),
+      })),
+      command("bulk-move", object({
+        cmd: constant("conversations-bulk-move" as const),
+        channelIds: option("--channel-ids", string({ metavar: "CHANNEL_IDS" })),
+        targetTeamId: option("--target-team-id", string({ metavar: "TEAM_ID" })),
+      })),
+      command("get-custom-retention", object({
+        cmd: constant("conversations-get-custom-retention" as const),
+        channelId: option("--channel-id", string({ metavar: "CHANNEL_ID" })),
+      })),
+      command("set-custom-retention", object({
+        cmd: constant("conversations-set-custom-retention" as const),
+        channelId: option("--channel-id", string({ metavar: "CHANNEL_ID" })),
+        durationDays: option("--duration-days", integer({ metavar: "DAYS" })),
+      })),
+    ),
+    or(
+      command("remove-custom-retention", object({
+        cmd: constant("conversations-remove-custom-retention" as const),
+        channelId: option("--channel-id", string({ metavar: "CHANNEL_ID" })),
+      })),
+      conversationsRestrictAccessCommands,
+      conversationsEkmCommands,
+    ),
+  ),
+);
+
+// ---------------------------------------------------------------------------
 // Root parser
 // ---------------------------------------------------------------------------
 
-const rootParser = or(tokenCommands, teamsCommands, usersCommands);
+const rootParser = or(tokenCommands, teamsCommands, usersCommands, conversationsCommands);
 
 // ---------------------------------------------------------------------------
 // Main
@@ -434,6 +625,248 @@ switch (config.cmd) {
       webOnly: config.webOnly,
     });
     console.log(`Session reset for user '${config.userId}'.`);
+    break;
+  }
+  case "conversations-archive": {
+    const client = await createSlackClient(store, profileFlag);
+    await executeConversationsArchive(client, { channelId: config.channelId });
+    console.log("Channel archived.");
+    break;
+  }
+  case "conversations-unarchive": {
+    const client = await createSlackClient(store, profileFlag);
+    await executeConversationsUnarchive(client, { channelId: config.channelId });
+    console.log("Channel unarchived.");
+    break;
+  }
+  case "conversations-delete": {
+    const client = await createSlackClient(store, profileFlag);
+    await executeConversationsDelete(client, { channelId: config.channelId });
+    console.log("Channel deleted.");
+    break;
+  }
+  case "conversations-rename": {
+    const client = await createSlackClient(store, profileFlag);
+    await executeConversationsRename(client, { channelId: config.channelId, name: config.name });
+    console.log("Channel renamed.");
+    break;
+  }
+  case "conversations-convert-to-private": {
+    const client = await createSlackClient(store, profileFlag);
+    await executeConversationsConvertToPrivate(client, {
+      channelId: config.channelId,
+      name: config.name,
+    });
+    console.log("Channel converted to private.");
+    break;
+  }
+  case "conversations-convert-to-public": {
+    const client = await createSlackClient(store, profileFlag);
+    await executeConversationsConvertToPublic(client, { channelId: config.channelId });
+    console.log("Channel converted to public.");
+    break;
+  }
+  case "conversations-create": {
+    const client = await createSlackClient(store, profileFlag);
+    const result = await executeConversationsCreate(client, {
+      name: config.name,
+      isPrivate: config.isPrivate,
+      teamId: config.teamId,
+      orgWide: config.orgWide,
+      description: config.description,
+    });
+    console.log(JSON.stringify(result, null, 2));
+    break;
+  }
+  case "conversations-search": {
+    const client = await createSlackClient(store, profileFlag);
+    const conversations = await executeConversationsSearch(client, {
+      query: config.query,
+      teamIds: config.teamIds?.split(","),
+      connectedTeamIds: config.connectedTeamIds?.split(","),
+      searchChannelTypes: config.searchChannelTypes?.split(","),
+      sort: config.sort,
+      sortDir: config.sortDir,
+      totalCountOnly: config.totalCountOnly,
+      cursor: config.cursor,
+      limit: config.limit,
+    });
+    const rows = conversations.map((c: { id?: string; name?: string }) => ({
+      id: c.id ?? "", name: c.name ?? "",
+    }));
+    console.log(formatOutput(rows, ["id", "name"], outputFormat));
+    break;
+  }
+  case "conversations-invite": {
+    const client = await createSlackClient(store, profileFlag);
+    const inviteUserParts = config.userIds.split(",");
+    const inviteFirstUser = inviteUserParts[0];
+    if (inviteFirstUser === undefined) {
+      throw new Error("--user-ids must not be empty");
+    }
+    const inviteUserIds: [string, ...string[]] = [inviteFirstUser, ...inviteUserParts.slice(1)];
+    await executeConversationsInvite(client, { channelId: config.channelId, userIds: inviteUserIds });
+    console.log("Users invited to channel.");
+    break;
+  }
+  case "conversations-lookup": {
+    const client = await createSlackClient(store, profileFlag);
+    const lookupTeamIdParts = config.teamIds.split(",");
+    const lookupFirstTeamId = lookupTeamIdParts[0];
+    if (lookupFirstTeamId === undefined) {
+      throw new Error("--team-ids must not be empty");
+    }
+    const lookupTeamIds: [string, ...string[]] = [lookupFirstTeamId, ...lookupTeamIdParts.slice(1)];
+    const channels = await executeConversationsLookup(client, {
+      teamIds: lookupTeamIds,
+      lastMessageActivityBefore: config.lastMessageActivityBefore,
+      maxMemberCount: config.maxMemberCount,
+      cursor: config.cursor,
+      limit: config.limit,
+    });
+    console.log(JSON.stringify(channels, null, 2));
+    break;
+  }
+  case "conversations-get-teams": {
+    const client = await createSlackClient(store, profileFlag);
+    const teams = await executeConversationsGetTeams(client, {
+      channelId: config.channelId,
+      cursor: config.cursor,
+      limit: config.limit,
+    });
+    const teamRows = teams.map((id: string) => ({ id }));
+    console.log(formatOutput(teamRows, ["id"], outputFormat));
+    break;
+  }
+  case "conversations-set-teams": {
+    const client = await createSlackClient(store, profileFlag);
+    await executeConversationsSetTeams(client, {
+      channelId: config.channelId,
+      targetTeamIds: config.teamIds?.split(","),
+      teamId: config.teamId,
+      orgChannel: config.orgChannel,
+      allowDisconnect: config.allowDisconnect ?? false,
+    });
+    console.log("Channel teams updated.");
+    break;
+  }
+  case "conversations-disconnect-shared": {
+    const client = await createSlackClient(store, profileFlag);
+    await executeConversationsDisconnectShared(client, {
+      channelId: config.channelId,
+      leavingTeamIds: config.leavingTeamIds?.split(","),
+    });
+    console.log("Channel disconnected from shared workspaces.");
+    break;
+  }
+  case "conversations-get-prefs": {
+    const client = await createSlackClient(store, profileFlag);
+    const prefs = await executeConversationsGetPrefs(client, { channelId: config.channelId });
+    console.log(JSON.stringify(prefs, null, 2));
+    break;
+  }
+  case "conversations-set-prefs": {
+    const client = await createSlackClient(store, profileFlag);
+    const parsedPrefs: Record<string, unknown> = JSON.parse(config.prefs);
+    await executeConversationsSetPrefs(client, { channelId: config.channelId, prefs: parsedPrefs });
+    console.log("Channel preferences updated.");
+    break;
+  }
+  case "conversations-bulk-archive": {
+    const client = await createSlackClient(store, profileFlag);
+    const archiveParts = config.channelIds.split(",");
+    const archiveFirst = archiveParts[0];
+    if (archiveFirst === undefined) {
+      throw new Error("--channel-ids must not be empty");
+    }
+    const archiveChannelIds: [string, ...string[]] = [archiveFirst, ...archiveParts.slice(1)];
+    await executeConversationsBulkArchive(client, { channelIds: archiveChannelIds });
+    console.log("Channels archived.");
+    break;
+  }
+  case "conversations-bulk-delete": {
+    const client = await createSlackClient(store, profileFlag);
+    const deleteParts = config.channelIds.split(",");
+    const deleteFirst = deleteParts[0];
+    if (deleteFirst === undefined) {
+      throw new Error("--channel-ids must not be empty");
+    }
+    const deleteChannelIds: [string, ...string[]] = [deleteFirst, ...deleteParts.slice(1)];
+    await executeConversationsBulkDelete(client, { channelIds: deleteChannelIds });
+    console.log("Channels deleted.");
+    break;
+  }
+  case "conversations-bulk-move": {
+    const client = await createSlackClient(store, profileFlag);
+    const moveParts = config.channelIds.split(",");
+    const moveFirst = moveParts[0];
+    if (moveFirst === undefined) {
+      throw new Error("--channel-ids must not be empty");
+    }
+    const moveChannelIds: [string, ...string[]] = [moveFirst, ...moveParts.slice(1)];
+    await executeConversationsBulkMove(client, { channelIds: moveChannelIds, targetTeamId: config.targetTeamId });
+    console.log("Channels moved.");
+    break;
+  }
+  case "conversations-get-custom-retention": {
+    const client = await createSlackClient(store, profileFlag);
+    const retentionResult = await executeConversationsGetCustomRetention(client, { channelId: config.channelId });
+    console.log(JSON.stringify(retentionResult, null, 2));
+    break;
+  }
+  case "conversations-set-custom-retention": {
+    const client = await createSlackClient(store, profileFlag);
+    await executeConversationsSetCustomRetention(client, {
+      channelId: config.channelId,
+      durationDays: config.durationDays,
+    });
+    console.log("Custom retention policy set.");
+    break;
+  }
+  case "conversations-remove-custom-retention": {
+    const client = await createSlackClient(store, profileFlag);
+    await executeConversationsRemoveCustomRetention(client, { channelId: config.channelId });
+    console.log("Custom retention policy removed.");
+    break;
+  }
+  case "conversations-restrict-access-add-group": {
+    const client = await createSlackClient(store, profileFlag);
+    await executeRestrictAccessAddGroup(client, {
+      channelId: config.channelId,
+      groupId: config.groupId,
+      teamId: config.teamId,
+    });
+    console.log("Group added to channel access list.");
+    break;
+  }
+  case "conversations-restrict-access-list-groups": {
+    const client = await createSlackClient(store, profileFlag);
+    const groupResult = await executeRestrictAccessListGroups(client, {
+      channelId: config.channelId,
+      teamId: config.teamId,
+    });
+    console.log(JSON.stringify(groupResult, null, 2));
+    break;
+  }
+  case "conversations-restrict-access-remove-group": {
+    const client = await createSlackClient(store, profileFlag);
+    await executeRestrictAccessRemoveGroup(client, {
+      channelId: config.channelId,
+      groupId: config.groupId,
+      teamId: config.teamId,
+    });
+    console.log("Group removed from channel access list.");
+    break;
+  }
+  case "conversations-ekm-list-original-connected-channel-info": {
+    const client = await createSlackClient(store, profileFlag);
+    const ekmResult = await executeEkmListOriginalConnectedChannelInfo(client, {
+      teamIds: config.teamIds?.split(","),
+      channelIds: config.channelIds?.split(","),
+      cursor: config.cursor,
+      limit: config.limit,
+    });
+    console.log(JSON.stringify(ekmResult, null, 2));
     break;
   }
   default: {

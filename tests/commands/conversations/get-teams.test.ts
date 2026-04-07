@@ -4,7 +4,7 @@ import { executeConversationsGetTeams } from "../../../src/commands/conversation
 describe("conversations get-teams", () => {
   test("returns team IDs from API", async () => {
     const mockGetTeams = mock(() =>
-      Promise.resolve({ ok: true, teams: ["T1", "T2", "T3"] }),
+      Promise.resolve({ ok: true, team_ids: ["T1", "T2", "T3"] }),
     );
     const client = { admin: { conversations: { getTeams: mockGetTeams } } } as any;
 

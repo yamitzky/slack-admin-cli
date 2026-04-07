@@ -12,13 +12,25 @@ export async function executeConversationsCreate(
   client: WebClient,
   opts: ConversationsCreateOptions,
 ) {
-  const params: Record<string, unknown> = {
+  const base = {
     name: opts.name,
     is_private: opts.isPrivate,
+    ...(opts.description !== undefined ? { description: opts.description } : {}),
   };
-  if (opts.teamId !== undefined) params.team_id = opts.teamId;
-  if (opts.orgWide !== undefined) params.org_wide = opts.orgWide;
-  if (opts.description !== undefined) params.description = opts.description;
 
-  return await client.admin.conversations.create(params);
+  if (opts.orgWide === true) {
+    return await client.admin.conversations.create({
+      ...base,
+      org_wide: true,
+    });
+  }
+
+  if (opts.teamId === undefined) {
+    throw new Error("Either --team-id or --org-wide must be provided.");
+  }
+
+  return await client.admin.conversations.create({
+    ...base,
+    team_id: opts.teamId,
+  });
 }
