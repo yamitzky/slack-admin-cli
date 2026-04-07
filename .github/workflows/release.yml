@@ -39,3 +39,10 @@ jobs:
         with:
           node-version: "24"
       - run: npm publish --provenance --access public
+
+  build-binaries:
+    needs: release-please
+    if: ${{ needs.release-please.outputs.release_created }}
+    uses: ./.github/workflows/binary.yml
+    with:
+      tag_name: ${{ needs.release-please.outputs.tag_name }}
