@@ -16,6 +16,22 @@ CLI & Agent Skill for managing Slack Enterprise Grid / Business+ workspaces via 
 
 ## Installation
 
+Requires [Bun](https://bun.sh) runtime:
+
+```bash
+npm install -g sladm-cli
+# or
+bun install -g sladm-cli
+```
+
+Or run directly without installing:
+
+```bash
+npx sladm-cli --help
+# or
+bunx sladm-cli --help
+```
+
 ### Pre-built Binaries
 
 Standalone binaries (no runtime required) are available on the [Releases](https://github.com/yamitzky/slack-admin-cli/releases) page:
@@ -33,22 +49,6 @@ Standalone binaries (no runtime required) are available on the [Releases](https:
 curl -L https://github.com/yamitzky/slack-admin-cli/releases/latest/download/sladm-darwin-arm64 -o sladm
 chmod +x sladm
 sudo mv sladm /usr/local/bin/
-```
-
-### Via npm / Bun
-
-Requires [Bun](https://bun.sh) runtime:
-
-```bash
-npm install -g sladm-cli
-# or
-bun install -g sladm-cli
-```
-
-Or run directly without installing:
-
-```bash
-npx sladm-cli --help
 ```
 
 ## Agent Skill
