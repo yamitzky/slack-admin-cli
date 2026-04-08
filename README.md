@@ -16,7 +16,7 @@ CLI & Agent Skill for managing Slack Enterprise Grid / Business+ workspaces via 
 
 ## Installation
 
-### Pre-built Binaries (recommended)
+### Pre-built Binaries
 
 Standalone binaries (no runtime required) are available on the [Releases](https://github.com/yamitzky/slack-admin-cli/releases) page:
 
