@@ -32,6 +32,8 @@ bun run lint                   # TypeScript 型チェック（tsc --noEmit）
 src/
 ├── index.ts          # CLI パーサー定義 + コマンドルーティング（switch文）
 ├── client.ts         # WebClient ファクトリ
+├── scim-client.ts    # ScimClient ファクトリ（SCIM v2 API 用）
+├── scim-types.ts     # SCIM 型定義
 ├── config.ts         # プロファイル・トークン管理
 ├── output.ts         # 出力フォーマッタ（JSON / table / plain）
 └── commands/         # コマンド実装（グループ/サブコマンドごとにファイル分割）
@@ -42,7 +44,9 @@ src/
     ├── apps/
     ├── invite-requests/
     ├── workflows/
-    └── functions/
+    ├── functions/
+    ├── scim-users/
+    └── scim-groups/
 tests/                # テスト（commands/ 以下と同構造）
 skills/               # Agent Skill 定義
 ```

@@ -6,7 +6,7 @@ CLI & Agent Skill for managing Slack Enterprise Grid / Business+ workspaces via 
 
 ## Features
 
-- **73+ admin commands** covering 8 API groups: teams, users, conversations, apps, invite-requests, workflows, functions, and token management
+- **83+ admin commands** covering 10 API groups: teams, users, conversations, apps, invite-requests, workflows, functions, scim-users, scim-groups, and token management
 - **Agent Skill** — ships with a Claude Code / Codex skill so AI agents can drive Slack admin tasks using the CLI as a tool
 - **Bulk operations** — archive, delete, or move hundreds of channels at once with `conversations bulk-*`
 - **Output formats** — table (human), JSON (programmatic), TSV (pipe-friendly)
@@ -182,6 +182,26 @@ sladm teams list --plain         # TSV (for scripting)
 | `conversations restrict-access remove-group` | Remove access group |
 | `conversations ekm list-original-connected-channel-info` | EKM channel info |
 
+### SCIM Users
+
+| Command | Description |
+|---------|-------------|
+| `scim-users list` | List users (SCIM) |
+| `scim-users get` | Get user details (SCIM) |
+| `scim-users create` | Create user (SCIM) |
+| `scim-users update` | Update user attributes (SCIM) |
+| `scim-users deactivate` | Deactivate user (SCIM) |
+
+### SCIM Groups
+
+| Command | Description |
+|---------|-------------|
+| `scim-groups list` | List groups (SCIM) |
+| `scim-groups get` | Get group details (SCIM) |
+| `scim-groups create` | Create group (SCIM) |
+| `scim-groups update` | Update group (SCIM) |
+| `scim-groups delete` | Delete group (SCIM) |
+
 ### Apps
 
 | Command | Description |
@@ -242,6 +262,7 @@ sladm teams list --plain         # TSV (for scripting)
 | `admin.invites:write` | Approve/deny invite requests |
 | `admin.workflows:read` | List workflows and functions |
 | `admin.workflows:write` | Manage workflows, set permissions |
+| `admin` | SCIM user and group management |
 
 ## Development
 
