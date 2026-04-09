@@ -154,6 +154,37 @@ describe("ScimClient", () => {
     });
   });
 
+  describe("groups.get", () => {
+    test("sends GET /Groups/{id}", async () => {
+      const group = { id: "G001", displayName: "Engineering", members: [{ value: "U001", display: "alice" }] };
+      const mockFn = mockFetchResponse(group);
+      const client = new ScimClient("xoxp-test");
+
+      const result = await client.groups.get("G001");
+
+      expect(result.id).toBe("G001");
+      const [url] = mockFn.mock.calls[0] as [string];
+      expect(url).toBe("https://api.slack.com/scim/v2/Groups/G001");
+    });
+  });
+
+  describe("groups.update", () => {
+    test("sends PATCH /Groups/{id} with operations", async () => {
+      const updated = { id: "G001", displayName: "New Name", members: [] };
+      const mockFn = mockFetchResponse(updated);
+      const client = new ScimClient("xoxp-test");
+
+      await client.groups.update("G001", [{ op: "replace", path: "displayName", value: "New Name" }]);
+
+      const [url, options] = mockFn.mock.calls[0] as [string, RequestInit];
+      expect(url).toBe("https://api.slack.com/scim/v2/Groups/G001");
+      expect(options.method).toBe("PATCH");
+      const body = JSON.parse(options.body as string);
+      expect(body.schemas).toEqual(["urn:ietf:params:scim:api:messages:2.0:PatchOp"]);
+      expect(body.Operations).toEqual([{ op: "replace", path: "displayName", value: "New Name" }]);
+    });
+  });
+
   describe("groups.delete", () => {
     test("sends DELETE /Groups/{id}", async () => {
       const mockFn = mockFetchNoContent();

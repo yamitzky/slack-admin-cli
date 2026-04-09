@@ -44,15 +44,12 @@ export class ScimClient {
     if (!response.ok) {
       const errorBody = await response.json().catch(() => null);
       const detail =
-        (errorBody as { Errors?: { description?: string }; detail?: string } | null)?.Errors
-          ?.description ??
-        (errorBody as { detail?: string } | null)?.detail ??
-        response.statusText;
+        errorBody?.Errors?.description ?? errorBody?.detail ?? response.statusText;
       throw new Error(`SCIM API error (${response.status}): ${detail}`);
     }
 
     if (response.status === 204) {
-      return undefined as never;
+      return undefined!;
     }
 
     return response.json();
