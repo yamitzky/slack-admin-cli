@@ -6,7 +6,7 @@ CLI & Agent Skill for managing Slack Enterprise Grid / Business+ workspaces via 
 
 ## Features
 
-- **83+ admin commands** covering 10 API groups: teams, users, conversations, apps, invite-requests, workflows, functions, scim-users, scim-groups, and token management
+- **79 admin commands** covering 10 API groups: teams, users, conversations, apps, invite-requests, workflows, functions, scim-users, scim-groups, and token management
 - **Agent Skill** — ships with a Claude Code / Codex skill so AI agents can drive Slack admin tasks using the CLI as a tool
 - **Bulk operations** — archive, delete, or move hundreds of channels at once with `conversations bulk-*`
 - **Output formats** — table (human), JSON (programmatic), TSV (pipe-friendly)
