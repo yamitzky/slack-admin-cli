@@ -871,16 +871,10 @@ switch (config.cmd) {
   }
   case "users-invite": {
     const client = await createSlackClient(store, profileFlag);
-    const inviteChannelParts = config.channelIds.split(",");
-    const inviteFirstChannel = inviteChannelParts[0];
-    if (inviteFirstChannel === undefined) {
-      throw new Error("--channel-ids must not be empty");
-    }
-    const inviteChannelIds: [string, ...string[]] = [inviteFirstChannel, ...inviteChannelParts.slice(1)];
     await executeUsersInvite(client, {
       teamId: config.teamId,
       email: config.email,
-      channelIds: inviteChannelIds,
+      channelIds: config.channelIds,
       customMessage: config.customMessage,
       realName: config.realName,
       isRestricted: config.isRestricted,
@@ -1506,4 +1500,24 @@ switch (config.cmd) {
 }
 }
 
-main();
+main().catch((err) => {
+  if (err.code === "slack_webapi_platform_error" && err.data) {
+    console.error(`Slack API error: ${err.data.error}`);
+    if (err.data.needed) {
+      console.error(`  needed scope: ${err.data.needed}`);
+    }
+    if (err.data.provided) {
+      console.error(`  provided scopes: ${err.data.provided}`);
+    }
+    if (err.data.response_metadata) {
+      const meta = err.data.response_metadata;
+      if (meta.messages) {
+        for (const msg of meta.messages) {
+          console.error(`  ${msg}`);
+        }
+      }
+    }
+    process.exit(1);
+  }
+  throw err;
+});
