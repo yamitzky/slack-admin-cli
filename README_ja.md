@@ -80,6 +80,30 @@ sladm token status
 sladm teams list
 ```
 
+## Usage Examples
+
+### ユーザーの招待
+
+```bash
+# フルメンバーとして招待
+sladm users invite --team-id T024XCDSF --email new-member@example.com \
+  --channel-ids C01ABCD2EFG
+
+# シングルチャンネルゲストとして招待
+sladm users invite --team-id T024XCDSF --email guest@partner.com \
+  --channel-ids C01ABCD2EFG --is-ultra-restricted true
+```
+
+### ユーザーの無効化
+
+```bash
+# ユーザーを検索
+sladm scim-users list --filter 'email eq "leaving@example.com"'
+
+# アカウントを無効化（SCIM API で組織全体に適用）
+sladm scim-users deactivate --id U02T7QBTFGA
+```
+
 ## Authentication
 
 ### プロファイル管理

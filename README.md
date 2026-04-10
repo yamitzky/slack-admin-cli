@@ -80,6 +80,30 @@ sladm token status
 sladm teams list
 ```
 
+## Usage Examples
+
+### Invite a user
+
+```bash
+# Invite as a full member
+sladm users invite --team-id T024XCDSF --email new-member@example.com \
+  --channel-ids C01ABCD2EFG
+
+# Invite as a single-channel guest
+sladm users invite --team-id T024XCDSF --email guest@partner.com \
+  --channel-ids C01ABCD2EFG --is-ultra-restricted true
+```
+
+### Deactivate a user
+
+```bash
+# Find the user
+sladm scim-users list --filter 'email eq "leaving@example.com"'
+
+# Deactivate their account (org-wide, via SCIM API)
+sladm scim-users deactivate --id U02T7QBTFGA
+```
+
 ## Authentication
 
 ### Profile Management
