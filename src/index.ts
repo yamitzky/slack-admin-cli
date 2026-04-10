@@ -129,17 +129,19 @@ const discoverabilityValueParser: ValueParser<"sync", TeamDiscoverability> = {
 // Global flags (parsed manually from process.argv)
 // ---------------------------------------------------------------------------
 
-const GLOBAL_FLAGS = new Set(["--json", "--plain"]);
+const GLOBAL_FLAGS = new Set(["--json", "--plain", "--verbose"]);
 const GLOBAL_FLAGS_WITH_VALUE = new Set(["--profile"]);
 
 function parseGlobalFlags(argv: string[]): {
   json: boolean;
   plain: boolean;
+  verbose: boolean;
   profile: string | undefined;
   rest: string[];
 } {
   let json = false;
   let plain = false;
+  let verbose = false;
   let profile: string | undefined;
   const rest: string[] = [];
 
@@ -149,6 +151,8 @@ function parseGlobalFlags(argv: string[]): {
       json = true;
     } else if (arg === "--plain") {
       plain = true;
+    } else if (arg === "--verbose") {
+      verbose = true;
     } else if (arg === "--profile") {
       profile = argv[i + 1];
       i++;
@@ -157,12 +161,13 @@ function parseGlobalFlags(argv: string[]): {
     }
   }
 
-  return { json, plain, profile, rest };
+  return { json, plain, verbose, profile, rest };
 }
 
 const globalFlags = parseGlobalFlags(process.argv.slice(2));
 const jsonFlag = globalFlags.json;
 const plainFlag = globalFlags.plain;
+const verboseFlag = globalFlags.verbose;
 const profileFlag = globalFlags.profile;
 
 const outputFormat: OutputFormat = jsonFlag ? "json" : plainFlag ? "plain" : "table";
@@ -1501,6 +1506,9 @@ switch (config.cmd) {
 }
 
 main().catch((err) => {
+  if (verboseFlag) {
+    throw err;
+  }
   if (err.code === "slack_webapi_platform_error" && err.data) {
     console.error(`Slack API error: ${err.data.error}`);
     if (err.data.needed) {
@@ -1509,15 +1517,13 @@ main().catch((err) => {
     if (err.data.provided) {
       console.error(`  provided scopes: ${err.data.provided}`);
     }
-    if (err.data.response_metadata) {
-      const meta = err.data.response_metadata;
-      if (meta.messages) {
-        for (const msg of meta.messages) {
-          console.error(`  ${msg}`);
-        }
+    if (err.data.response_metadata?.messages) {
+      for (const msg of err.data.response_metadata.messages) {
+        console.error(`  ${msg}`);
       }
     }
-    process.exit(1);
+  } else {
+    console.error(`Error: ${err.message ?? err}`);
   }
-  throw err;
+  process.exit(1);
 });
