@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.1](https://github.com/yamitzky/slack-admin-cli/compare/sladm-cli-v0.3.0...sladm-cli-v0.3.1) (2026-04-10)
+
+
+### Bug Fixes
+
+* pass channel_ids as string in users invite ([#9](https://github.com/yamitzky/slack-admin-cli/issues/9)) ([a90ac85](https://github.com/yamitzky/slack-admin-cli/commit/a90ac85f125be8c4f096e7d2fc74e48013e2f3c8))
+
 ## [0.3.0](https://github.com/yamitzky/slack-admin-cli/compare/sladm-cli-v0.2.5...sladm-cli-v0.3.0) (2026-04-10)
 
 
