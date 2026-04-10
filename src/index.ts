@@ -141,17 +141,19 @@ const discoverabilityValueParser: ValueParser<"sync", TeamDiscoverability> = {
 // Global flags (parsed manually from process.argv)
 // ---------------------------------------------------------------------------
 
-const GLOBAL_FLAGS = new Set(["--json", "--plain"]);
+const GLOBAL_FLAGS = new Set(["--json", "--plain", "--verbose"]);
 const GLOBAL_FLAGS_WITH_VALUE = new Set(["--profile"]);
 
 function parseGlobalFlags(argv: string[]): {
   json: boolean;
   plain: boolean;
+  verbose: boolean;
   profile: string | undefined;
   rest: string[];
 } {
   let json = false;
   let plain = false;
+  let verbose = false;
   let profile: string | undefined;
   const rest: string[] = [];
 
@@ -161,6 +163,8 @@ function parseGlobalFlags(argv: string[]): {
       json = true;
     } else if (arg === "--plain") {
       plain = true;
+    } else if (arg === "--verbose") {
+      verbose = true;
     } else if (arg === "--profile") {
       profile = argv[i + 1];
       i++;
@@ -169,12 +173,13 @@ function parseGlobalFlags(argv: string[]): {
     }
   }
 
-  return { json, plain, profile, rest };
+  return { json, plain, verbose, profile, rest };
 }
 
 const globalFlags = parseGlobalFlags(process.argv.slice(2));
 const jsonFlag = globalFlags.json;
 const plainFlag = globalFlags.plain;
+const verboseFlag = globalFlags.verbose;
 const profileFlag = globalFlags.profile;
 
 const outputFormat: OutputFormat = jsonFlag ? "json" : plainFlag ? "plain" : "table";
@@ -963,16 +968,10 @@ switch (config.cmd) {
   }
   case "users-invite": {
     const client = await createSlackClient(store, profileFlag);
-    const inviteChannelParts = config.channelIds.split(",");
-    const inviteFirstChannel = inviteChannelParts[0];
-    if (inviteFirstChannel === undefined) {
-      throw new Error("--channel-ids must not be empty");
-    }
-    const inviteChannelIds: [string, ...string[]] = [inviteFirstChannel, ...inviteChannelParts.slice(1)];
     await executeUsersInvite(client, {
       teamId: config.teamId,
       email: config.email,
-      channelIds: inviteChannelIds,
+      channelIds: config.channelIds,
       customMessage: config.customMessage,
       realName: config.realName,
       isRestricted: config.isRestricted,
@@ -1712,4 +1711,25 @@ switch (config.cmd) {
 }
 }
 
-main();
+main().catch((err) => {
+  if (verboseFlag) {
+    throw err;
+  }
+  if (err.code === "slack_webapi_platform_error" && err.data) {
+    console.error(`Slack API error: ${err.data.error}`);
+    if (err.data.needed) {
+      console.error(`  needed scope: ${err.data.needed}`);
+    }
+    if (err.data.provided) {
+      console.error(`  provided scopes: ${err.data.provided}`);
+    }
+    if (err.data.response_metadata?.messages) {
+      for (const msg of err.data.response_metadata.messages) {
+        console.error(`  ${msg}`);
+      }
+    }
+  } else {
+    console.error(`Error: ${err.message ?? err}`);
+  }
+  process.exit(1);
+});

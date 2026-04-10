@@ -62,7 +62,8 @@ skills/               # Agent Skill 定義
 
 ### 型安全性ルール
 
-- **`as` キャスト禁止**: 実装コードで `as` を使わない。`satisfies` または設計の見直しで対応
+- **`as` キャスト原則禁止**: 実装コードで `as` を使わない。`satisfies` または設計の見直しで対応
+- **SDK 型バグの回避**: SDK の型定義が実際の API と異なる場合、`apiCall()` より `as` での回避を優先する
 - **discriminated union**: `client.apiCall(methodName, params)` で `Record<string, unknown>` として渡す（void メソッド）
 - **データ返却メソッド**: ブランチパターンで型安全に（`if (opts.teamId) { ... } else if (opts.enterpriseId) { ... }`）
 
