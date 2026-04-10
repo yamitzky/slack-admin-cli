@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.0](https://github.com/yamitzky/slack-admin-cli/compare/sladm-cli-v0.2.5...sladm-cli-v0.3.0) (2026-04-10)
+
+
+### Features
+
+* add SCIM v2 API support (scim-users, scim-groups) ([#7](https://github.com/yamitzky/slack-admin-cli/issues/7)) ([b174a80](https://github.com/yamitzky/slack-admin-cli/commit/b174a80bf6677ba3ec778e16db824f9f2a8b76fc))
+
 ## [0.2.5](https://github.com/yamitzky/slack-admin-cli/compare/sladm-cli-v0.2.4...sladm-cli-v0.2.5) (2026-04-07)
 
 
