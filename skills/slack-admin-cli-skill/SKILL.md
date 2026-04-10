@@ -1,8 +1,8 @@
 ---
 name: slack-admin-cli-skill
 description: >-
-  Slack Admin CLI (`sladm`) を使って Slack Admin API を操作する。
-  チーム管理・ユーザー管理・チャンネル管理・アプリ管理・ワークフロー管理・招待リクエスト管理・関数管理など、
+  Slack Admin CLI (`sladm`) を使って Slack Admin API / SCIM API を操作する。
+  チーム管理・ユーザー管理・チャンネル管理・アプリ管理・ワークフロー管理・招待リクエスト管理・関数管理・SCIMユーザー/グループ管理など、
   Slack ワークスペースの管理操作を行いたいときに使う。
 ---
 
@@ -73,6 +73,8 @@ sladm --profile staging users list
 | `invite-requests` | ワークスペース招待の承認・拒否 | [invite-requests](recipes/invite-requests.md) |
 | `workflows` | ワークフロー検索・権限・コラボレーター | [workflows](recipes/workflows.md) |
 | `functions` | カスタム関数の一覧・権限設定 | [functions](recipes/functions.md) |
+| `scim-users` | SCIM ユーザー管理（作成・更新・無効化） | [scim-users](recipes/scim-users.md) |
+| `scim-groups` | SCIM グループ管理（作成・更新・削除） | [scim-groups](recipes/scim-groups.md) |
 
 ## トラブルシューティング
 

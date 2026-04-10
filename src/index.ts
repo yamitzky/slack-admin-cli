@@ -82,6 +82,18 @@ import { executeFunctionsList } from "./commands/functions/list";
 import { executeFunctionsPermissionsLookup } from "./commands/functions/permissions/lookup";
 import { executeFunctionsPermissionsSet } from "./commands/functions/permissions/set";
 
+import { executeScimUsersList } from "./commands/scim-users/list";
+import { executeScimUsersGet } from "./commands/scim-users/get";
+import { executeScimUsersCreate } from "./commands/scim-users/create";
+import { executeScimUsersUpdate } from "./commands/scim-users/update";
+import { executeScimUsersDeactivate } from "./commands/scim-users/deactivate";
+import { executeScimGroupsList } from "./commands/scim-groups/list";
+import { executeScimGroupsGet } from "./commands/scim-groups/get";
+import { executeScimGroupsCreate } from "./commands/scim-groups/create";
+import { executeScimGroupsUpdate } from "./commands/scim-groups/update";
+import { executeScimGroupsDelete } from "./commands/scim-groups/delete";
+import { createScimClient } from "./scim-client";
+
 import { ProfileStore } from "./config";
 import { createSlackClient } from "./client";
 import { formatOutput, type OutputFormat } from "./output";
@@ -741,6 +753,85 @@ const functionsCommands = command(
 );
 
 // ---------------------------------------------------------------------------
+// SCIM Users commands
+// ---------------------------------------------------------------------------
+
+const scimUsersCommands = command(
+  "scim-users",
+  or(
+    command("list", object({
+      cmd: constant("scim-users-list" as const),
+      startIndex: optional(option("--start-index", integer({ metavar: "START_INDEX" }))),
+      count: optional(option("--count", integer({ metavar: "COUNT" }))),
+      filter: optional(option("--filter", string({ metavar: "FILTER" }))),
+    })),
+    command("get", object({
+      cmd: constant("scim-users-get" as const),
+      id: option("--id", string({ metavar: "USER_ID" })),
+    })),
+    command("create", object({
+      cmd: constant("scim-users-create" as const),
+      userName: option("--user-name", string({ metavar: "USER_NAME" })),
+      email: option("--email", string({ metavar: "EMAIL" })),
+      givenName: optional(option("--given-name", string({ metavar: "GIVEN_NAME" }))),
+      familyName: optional(option("--family-name", string({ metavar: "FAMILY_NAME" }))),
+      displayName: optional(option("--display-name", string({ metavar: "DISPLAY_NAME" }))),
+    })),
+    command("update", object({
+      cmd: constant("scim-users-update" as const),
+      id: option("--id", string({ metavar: "USER_ID" })),
+      active: optional(option("--active", boolValueParser)),
+      userName: optional(option("--user-name", string({ metavar: "USER_NAME" }))),
+      email: optional(option("--email", string({ metavar: "EMAIL" }))),
+      givenName: optional(option("--given-name", string({ metavar: "GIVEN_NAME" }))),
+      familyName: optional(option("--family-name", string({ metavar: "FAMILY_NAME" }))),
+      displayName: optional(option("--display-name", string({ metavar: "DISPLAY_NAME" }))),
+      title: optional(option("--title", string({ metavar: "TITLE" }))),
+    })),
+    command("deactivate", object({
+      cmd: constant("scim-users-deactivate" as const),
+      id: option("--id", string({ metavar: "USER_ID" })),
+    })),
+  ),
+);
+
+// ---------------------------------------------------------------------------
+// SCIM Groups commands
+// ---------------------------------------------------------------------------
+
+const scimGroupsCommands = command(
+  "scim-groups",
+  or(
+    command("list", object({
+      cmd: constant("scim-groups-list" as const),
+      startIndex: optional(option("--start-index", integer({ metavar: "START_INDEX" }))),
+      count: optional(option("--count", integer({ metavar: "COUNT" }))),
+      filter: optional(option("--filter", string({ metavar: "FILTER" }))),
+    })),
+    command("get", object({
+      cmd: constant("scim-groups-get" as const),
+      id: option("--id", string({ metavar: "GROUP_ID" })),
+    })),
+    command("create", object({
+      cmd: constant("scim-groups-create" as const),
+      displayName: option("--display-name", string({ metavar: "DISPLAY_NAME" })),
+      memberIds: optional(option("--member-ids", string({ metavar: "MEMBER_IDS" }))),
+    })),
+    command("update", object({
+      cmd: constant("scim-groups-update" as const),
+      id: option("--id", string({ metavar: "GROUP_ID" })),
+      displayName: optional(option("--display-name", string({ metavar: "DISPLAY_NAME" }))),
+      addMemberIds: optional(option("--add-member-ids", string({ metavar: "MEMBER_IDS" }))),
+      removeMemberIds: optional(option("--remove-member-ids", string({ metavar: "MEMBER_IDS" }))),
+    })),
+    command("delete", object({
+      cmd: constant("scim-groups-delete" as const),
+      id: option("--id", string({ metavar: "GROUP_ID" })),
+    })),
+  ),
+);
+
+// ---------------------------------------------------------------------------
 // Root parser
 // ---------------------------------------------------------------------------
 
@@ -748,6 +839,7 @@ const rootParser = or(
   or(tokenCommands, teamsCommands, usersCommands),
   or(conversationsCommands, appsCommands),
   or(inviteRequestsCommands, workflowsCommands, functionsCommands),
+  or(scimUsersCommands, scimGroupsCommands),
 );
 
 // ---------------------------------------------------------------------------
@@ -1497,6 +1589,120 @@ switch (config.cmd) {
       userIds: fnSetUserIds,
     });
     console.log("Function permissions updated.");
+    break;
+  }
+  case "scim-users-list": {
+    const client = await createScimClient(store, profileFlag);
+    const users = await executeScimUsersList(client, {
+      startIndex: config.startIndex,
+      count: config.count,
+      filter: config.filter,
+    });
+    const rows = users.map((u) => ({
+      id: u.id,
+      userName: u.userName,
+      email: u.emails?.find((e) => e.primary)?.value ?? u.emails?.[0]?.value ?? "",
+      active: String(u.active),
+    }));
+    console.log(formatOutput(rows, ["id", "userName", "email", "active"], outputFormat));
+    break;
+  }
+  case "scim-users-get": {
+    const client = await createScimClient(store, profileFlag);
+    const user = await executeScimUsersGet(client, { id: config.id });
+    console.log(JSON.stringify(user, null, 2));
+    break;
+  }
+  case "scim-users-create": {
+    const client = await createScimClient(store, profileFlag);
+    const created = await executeScimUsersCreate(client, {
+      userName: config.userName,
+      email: config.email,
+      givenName: config.givenName,
+      familyName: config.familyName,
+      displayName: config.displayName,
+    });
+    console.log(JSON.stringify(created, null, 2));
+    break;
+  }
+  case "scim-users-update": {
+    const client = await createScimClient(store, profileFlag);
+    const updated = await executeScimUsersUpdate(client, {
+      id: config.id,
+      active: config.active,
+      userName: config.userName,
+      email: config.email,
+      givenName: config.givenName,
+      familyName: config.familyName,
+      displayName: config.displayName,
+      title: config.title,
+    });
+    console.log(JSON.stringify(updated, null, 2));
+    break;
+  }
+  case "scim-users-deactivate": {
+    const client = await createScimClient(store, profileFlag);
+    await executeScimUsersDeactivate(client, { id: config.id });
+    console.log(`User '${config.id}' deactivated.`);
+    break;
+  }
+  case "scim-groups-list": {
+    const client = await createScimClient(store, profileFlag);
+    const groups = await executeScimGroupsList(client, {
+      startIndex: config.startIndex,
+      count: config.count,
+      filter: config.filter,
+    });
+    const rows = groups.map((g) => ({
+      id: g.id,
+      displayName: g.displayName,
+      memberCount: String(g.members?.length ?? 0),
+    }));
+    console.log(formatOutput(rows, ["id", "displayName", "memberCount"], outputFormat));
+    break;
+  }
+  case "scim-groups-get": {
+    const client = await createScimClient(store, profileFlag);
+    const group = await executeScimGroupsGet(client, { id: config.id });
+    console.log(JSON.stringify(group, null, 2));
+    break;
+  }
+  case "scim-groups-create": {
+    const client = await createScimClient(store, profileFlag);
+    let groupMemberIds: string[] | undefined;
+    if (config.memberIds !== undefined) {
+      groupMemberIds = config.memberIds.split(",");
+    }
+    const created = await executeScimGroupsCreate(client, {
+      displayName: config.displayName,
+      memberIds: groupMemberIds,
+    });
+    console.log(JSON.stringify(created, null, 2));
+    break;
+  }
+  case "scim-groups-update": {
+    const client = await createScimClient(store, profileFlag);
+    let groupAddMemberIds: string[] | undefined;
+    let groupRemoveMemberIds: string[] | undefined;
+    if (config.addMemberIds !== undefined) {
+      groupAddMemberIds = config.addMemberIds.split(",");
+    }
+    if (config.removeMemberIds !== undefined) {
+      groupRemoveMemberIds = config.removeMemberIds.split(",");
+    }
+    const updated = await executeScimGroupsUpdate(client, {
+      id: config.id,
+      displayName: config.displayName,
+      addMemberIds: groupAddMemberIds,
+      removeMemberIds: groupRemoveMemberIds,
+    });
+    console.log(JSON.stringify(updated, null, 2));
+    break;
+  }
+  case "scim-groups-delete": {
+    const client = await createScimClient(store, profileFlag);
+    await executeScimGroupsDelete(client, { id: config.id });
+    console.log(`Group '${config.id}' deleted.`);
     break;
   }
   default: {
