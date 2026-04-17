@@ -91,6 +91,12 @@ import { executeBarriersDelete } from "./commands/barriers/delete";
 import { executeBarriersList } from "./commands/barriers/list";
 import { executeBarriersUpdate } from "./commands/barriers/update";
 
+import { executeEmojiAdd } from "./commands/emoji/add";
+import { executeEmojiAddAlias } from "./commands/emoji/add-alias";
+import { executeEmojiList } from "./commands/emoji/list";
+import { executeEmojiRemove } from "./commands/emoji/remove";
+import { executeEmojiRename } from "./commands/emoji/rename";
+
 import { executeScimUsersList } from "./commands/scim-users/list";
 import { executeScimUsersGet } from "./commands/scim-users/get";
 import { executeScimUsersCreate } from "./commands/scim-users/create";
@@ -826,6 +832,40 @@ const barriersCommands = command(
 );
 
 // ---------------------------------------------------------------------------
+// Emoji commands
+// ---------------------------------------------------------------------------
+
+const emojiCommands = command(
+  "emoji",
+  or(
+    command("add", object({
+      cmd: constant("emoji-add" as const),
+      name: option("--name", string({ metavar: "NAME" })),
+      url: option("--url", string({ metavar: "URL" })),
+    })),
+    command("add-alias", object({
+      cmd: constant("emoji-add-alias" as const),
+      name: option("--name", string({ metavar: "NAME" })),
+      aliasFor: option("--alias-for", string({ metavar: "ALIAS_FOR" })),
+    })),
+    command("list", object({
+      cmd: constant("emoji-list" as const),
+      cursor: optional(option("--cursor", string({ metavar: "CURSOR" }))),
+      limit: optional(option("--limit", integer({ metavar: "LIMIT" }))),
+    })),
+    command("remove", object({
+      cmd: constant("emoji-remove" as const),
+      name: option("--name", string({ metavar: "NAME" })),
+    })),
+    command("rename", object({
+      cmd: constant("emoji-rename" as const),
+      name: option("--name", string({ metavar: "NAME" })),
+      newName: option("--new-name", string({ metavar: "NEW_NAME" })),
+    })),
+  ),
+);
+
+// ---------------------------------------------------------------------------
 // SCIM Users commands
 // ---------------------------------------------------------------------------
 
@@ -912,7 +952,7 @@ const rootParser = or(
   or(tokenCommands, teamsCommands, usersCommands),
   or(conversationsCommands, appsCommands),
   or(inviteRequestsCommands, workflowsCommands, functionsCommands),
-  or(scimUsersCommands, scimGroupsCommands, authPolicyCommands, barriersCommands),
+  or(scimUsersCommands, scimGroupsCommands, authPolicyCommands, barriersCommands, emojiCommands),
 );
 
 // ---------------------------------------------------------------------------
@@ -1864,6 +1904,36 @@ switch (config.cmd) {
       barrieredFromUsergroupIds,
     });
     console.log(JSON.stringify(result, null, 2));
+    break;
+  }
+  case "emoji-add": {
+    const client = await createSlackClient(store, profileFlag);
+    await executeEmojiAdd(client, { name: config.name, url: config.url });
+    console.log(`Emoji '${config.name}' added.`);
+    break;
+  }
+  case "emoji-add-alias": {
+    const client = await createSlackClient(store, profileFlag);
+    await executeEmojiAddAlias(client, { name: config.name, aliasFor: config.aliasFor });
+    console.log(`Alias '${config.name}' for '${config.aliasFor}' added.`);
+    break;
+  }
+  case "emoji-list": {
+    const client = await createSlackClient(store, profileFlag);
+    const rows = await executeEmojiList(client, { cursor: config.cursor, limit: config.limit });
+    console.log(formatOutput(rows, ["name", "url"], outputFormat));
+    break;
+  }
+  case "emoji-remove": {
+    const client = await createSlackClient(store, profileFlag);
+    await executeEmojiRemove(client, { name: config.name });
+    console.log(`Emoji '${config.name}' removed.`);
+    break;
+  }
+  case "emoji-rename": {
+    const client = await createSlackClient(store, profileFlag);
+    await executeEmojiRename(client, { name: config.name, newName: config.newName });
+    console.log(`Emoji renamed '${config.name}' -> '${config.newName}'.`);
     break;
   }
   default: {
