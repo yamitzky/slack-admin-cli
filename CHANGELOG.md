@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.0](https://github.com/yamitzky/slack-admin-cli/compare/sladm-cli-v0.3.1...sladm-cli-v0.4.0) (2026-04-17)
+
+
+### Features
+
+* cover remaining SDK-supported admin.* methods ([#11](https://github.com/yamitzky/slack-admin-cli/issues/11)) ([b166fce](https://github.com/yamitzky/slack-admin-cli/commit/b166fcefbb8989e1832357310068255f8690b200))
+
 ## [0.3.1](https://github.com/yamitzky/slack-admin-cli/compare/sladm-cli-v0.3.0...sladm-cli-v0.3.1) (2026-04-10)
 
 
