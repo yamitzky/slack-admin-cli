@@ -1,7 +1,7 @@
 import type { WebClient } from "@slack/web-api";
 
 interface AuthPolicyRemoveEntitiesOptions {
-  entityIds: string[];
+  entityIds: [string, ...string[]];
   entityType: "USER";
   policyName: "email_password";
 }

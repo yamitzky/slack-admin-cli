@@ -1739,7 +1739,10 @@ switch (config.cmd) {
   }
   case "auth-policy-assign-entities": {
     const client = await createSlackClient(store, profileFlag);
-    const entityIds = config.entityIds.split(",");
+    const parts = config.entityIds.split(",");
+    const first = parts[0];
+    if (first === undefined || first === "") throw new Error("--entity-ids must not be empty");
+    const entityIds: [string, ...string[]] = [first, ...parts.slice(1)];
     if (config.entityType !== "USER") throw new Error('--entity-type must be "USER"');
     if (config.policyName !== "email_password") throw new Error('--policy-name must be "email_password"');
     await executeAuthPolicyAssignEntities(client, {
@@ -1762,7 +1765,7 @@ switch (config.cmd) {
       cursor: config.cursor,
       limit: config.limit,
     });
-    const rows = (entities as Array<{ entity_id?: string; entity_type?: string }>).map((e) => ({
+    const rows = entities.map((e) => ({
       entity_id: e.entity_id ?? "",
       entity_type: e.entity_type ?? "",
     }));
@@ -1771,7 +1774,10 @@ switch (config.cmd) {
   }
   case "auth-policy-remove-entities": {
     const client = await createSlackClient(store, profileFlag);
-    const entityIds = config.entityIds.split(",");
+    const parts = config.entityIds.split(",");
+    const first = parts[0];
+    if (first === undefined || first === "") throw new Error("--entity-ids must not be empty");
+    const entityIds: [string, ...string[]] = [first, ...parts.slice(1)];
     if (config.entityType !== "USER") throw new Error('--entity-type must be "USER"');
     if (config.policyName !== "email_password") throw new Error('--policy-name must be "email_password"');
     await executeAuthPolicyRemoveEntities(client, {
