@@ -19,6 +19,7 @@ import { executeSetName } from "./commands/teams/settings/set-name";
 import { executeSetIcon } from "./commands/teams/settings/set-icon";
 import { executeSetDescription } from "./commands/teams/settings/set-description";
 import { executeSetDiscoverability } from "./commands/teams/settings/set-discoverability";
+import { executeSetDefaultChannels } from "./commands/teams/settings/set-default-channels";
 import { executeUsersList } from "./commands/users/list";
 import { executeUsersInvite } from "./commands/users/invite";
 import { executeUsersAssign } from "./commands/users/assign";
@@ -27,6 +28,14 @@ import { executeUsersSetAdmin } from "./commands/users/set-admin";
 import { executeUsersSetOwner } from "./commands/users/set-owner";
 import { executeUsersSetRegular } from "./commands/users/set-regular";
 import { executeSessionReset } from "./commands/users/session-reset";
+import { executeUsersSessionClearSettings } from "./commands/users/session/clear-settings";
+import { executeUsersSessionGetSettings } from "./commands/users/session/get-settings";
+import { executeUsersSessionInvalidate } from "./commands/users/session/invalidate";
+import { executeUsersSessionList } from "./commands/users/session/list";
+import { executeUsersSessionResetBulk } from "./commands/users/session/reset-bulk";
+import { executeUsersSessionSetSettings } from "./commands/users/session/set-settings";
+import { executeUsersSetExpiration } from "./commands/users/set-expiration";
+import { executeUsersUnsupportedVersionsExport } from "./commands/users/unsupported-versions/export";
 
 import { executeConversationsArchive } from "./commands/conversations/archive";
 import { executeConversationsUnarchive } from "./commands/conversations/unarchive";
@@ -81,6 +90,30 @@ import { executeWorkflowsCollaboratorsRemove } from "./commands/workflows/collab
 import { executeFunctionsList } from "./commands/functions/list";
 import { executeFunctionsPermissionsLookup } from "./commands/functions/permissions/lookup";
 import { executeFunctionsPermissionsSet } from "./commands/functions/permissions/set";
+
+import { executeAuthPolicyAssignEntities } from "./commands/auth-policy/assign-entities";
+import { executeAuthPolicyGetEntities } from "./commands/auth-policy/get-entities";
+import { executeAuthPolicyRemoveEntities } from "./commands/auth-policy/remove-entities";
+
+import { executeBarriersCreate } from "./commands/barriers/create";
+import { executeBarriersDelete } from "./commands/barriers/delete";
+import { executeBarriersList } from "./commands/barriers/list";
+import { executeBarriersUpdate } from "./commands/barriers/update";
+
+import { executeEmojiAdd } from "./commands/emoji/add";
+import { executeEmojiAddAlias } from "./commands/emoji/add-alias";
+import { executeEmojiList } from "./commands/emoji/list";
+import { executeEmojiRemove } from "./commands/emoji/remove";
+import { executeEmojiRename } from "./commands/emoji/rename";
+
+import { executeRolesAddAssignments } from "./commands/roles/add-assignments";
+import { executeRolesListAssignments } from "./commands/roles/list-assignments";
+import { executeRolesRemoveAssignments } from "./commands/roles/remove-assignments";
+
+import { executeUsergroupsAddChannels } from "./commands/usergroups/add-channels";
+import { executeUsergroupsAddTeams } from "./commands/usergroups/add-teams";
+import { executeUsergroupsListChannels } from "./commands/usergroups/list-channels";
+import { executeUsergroupsRemoveChannels } from "./commands/usergroups/remove-channels";
 
 import { executeScimUsersList } from "./commands/scim-users/list";
 import { executeScimUsersGet } from "./commands/scim-users/get";
@@ -240,6 +273,11 @@ const teamsSettingsCommands = command(
       teamId: option("--team-id", string({ metavar: "TEAM_ID" })),
       discoverability: option("--discoverability", discoverabilityValueParser),
     })),
+    command("set-default-channels", object({
+      cmd: constant("teams-settings-set-default-channels" as const),
+      teamId: option("--team-id", string({ metavar: "TEAM_ID" })),
+      channelIds: option("--channel-ids", string({ metavar: "CHANNEL_IDS" })),
+    })),
   ),
 );
 
@@ -322,11 +360,56 @@ const usersCommands = command(
       teamId: option("--team-id", string({ metavar: "TEAM_ID" })),
       userId: option("--user-id", string({ metavar: "USER_ID" })),
     })),
-    command("session", command("reset", object({
-      cmd: constant("users-session-reset" as const),
+    command("session", or(
+      command("reset", object({
+        cmd: constant("users-session-reset" as const),
+        userId: option("--user-id", string({ metavar: "USER_ID" })),
+        mobileOnly: optional(option("--mobile-only", boolValueParser)),
+        webOnly: optional(option("--web-only", boolValueParser)),
+      })),
+      command("clear-settings", object({
+        cmd: constant("users-session-clear-settings" as const),
+        userIds: option("--user-ids", string({ metavar: "USER_IDS" })),
+      })),
+      command("get-settings", object({
+        cmd: constant("users-session-get-settings" as const),
+        userIds: option("--user-ids", string({ metavar: "USER_IDS" })),
+      })),
+      command("invalidate", object({
+        cmd: constant("users-session-invalidate" as const),
+        teamId: option("--team-id", string({ metavar: "TEAM_ID" })),
+        sessionId: option("--session-id", string({ metavar: "SESSION_ID" })),
+      })),
+      command("list", object({
+        cmd: constant("users-session-list" as const),
+        teamId: optional(option("--team-id", string({ metavar: "TEAM_ID" }))),
+        userId: optional(option("--user-id", string({ metavar: "USER_ID" }))),
+        cursor: optional(option("--cursor", string({ metavar: "CURSOR" }))),
+        limit: optional(option("--limit", integer({ metavar: "LIMIT" }))),
+      })),
+      command("reset-bulk", object({
+        cmd: constant("users-session-reset-bulk" as const),
+        userIds: option("--user-ids", string({ metavar: "USER_IDS" })),
+        mobileOnly: optional(option("--mobile-only", boolValueParser)),
+        webOnly: optional(option("--web-only", boolValueParser)),
+      })),
+      command("set-settings", object({
+        cmd: constant("users-session-set-settings" as const),
+        userIds: option("--user-ids", string({ metavar: "USER_IDS" })),
+        desktopAppBrowserQuit: optional(option("--desktop-app-browser-quit", boolValueParser)),
+        duration: optional(option("--duration", integer({ metavar: "SECONDS" }))),
+      })),
+    )),
+    command("set-expiration", object({
+      cmd: constant("users-set-expiration" as const),
       userId: option("--user-id", string({ metavar: "USER_ID" })),
-      mobileOnly: optional(option("--mobile-only", boolValueParser)),
-      webOnly: optional(option("--web-only", boolValueParser)),
+      expirationTs: option("--expiration-ts", integer({ metavar: "TIMESTAMP" })),
+      teamId: optional(option("--team-id", string({ metavar: "TEAM_ID" }))),
+    })),
+    command("unsupported-versions", command("export", object({
+      cmd: constant("users-unsupported-versions-export" as const),
+      dateEndOfSupport: optional(option("--date-end-of-support", integer({ metavar: "TIMESTAMP" }))),
+      dateSessionsStarted: optional(option("--date-sessions-started", integer({ metavar: "TIMESTAMP" }))),
     }))),
   ),
 );
@@ -758,6 +841,162 @@ const functionsCommands = command(
 );
 
 // ---------------------------------------------------------------------------
+// Auth Policy commands
+// ---------------------------------------------------------------------------
+
+const authPolicyCommands = command(
+  "auth-policy",
+  or(
+    command("assign-entities", object({
+      cmd: constant("auth-policy-assign-entities" as const),
+      entityIds: option("--entity-ids", string({ metavar: "ENTITY_IDS" })),
+      entityType: option("--entity-type", string({ metavar: "ENTITY_TYPE" })),
+      policyName: option("--policy-name", string({ metavar: "POLICY_NAME" })),
+    })),
+    command("get-entities", object({
+      cmd: constant("auth-policy-get-entities" as const),
+      policyName: option("--policy-name", string({ metavar: "POLICY_NAME" })),
+      entityType: optional(option("--entity-type", string({ metavar: "ENTITY_TYPE" }))),
+      cursor: optional(option("--cursor", string({ metavar: "CURSOR" }))),
+      limit: optional(option("--limit", integer({ metavar: "LIMIT" }))),
+    })),
+    command("remove-entities", object({
+      cmd: constant("auth-policy-remove-entities" as const),
+      entityIds: option("--entity-ids", string({ metavar: "ENTITY_IDS" })),
+      entityType: option("--entity-type", string({ metavar: "ENTITY_TYPE" })),
+      policyName: option("--policy-name", string({ metavar: "POLICY_NAME" })),
+    })),
+  ),
+);
+
+// ---------------------------------------------------------------------------
+// Barriers commands
+// ---------------------------------------------------------------------------
+
+const barriersCommands = command(
+  "barriers",
+  or(
+    command("create", object({
+      cmd: constant("barriers-create" as const),
+      primaryUsergroupId: option("--primary-usergroup-id", string({ metavar: "USERGROUP_ID" })),
+      barrieredFromUsergroupIds: option("--barriered-from-usergroup-ids", string({ metavar: "USERGROUP_IDS" })),
+    })),
+    command("delete", object({
+      cmd: constant("barriers-delete" as const),
+      barrierId: option("--barrier-id", string({ metavar: "BARRIER_ID" })),
+    })),
+    command("list", object({
+      cmd: constant("barriers-list" as const),
+      cursor: optional(option("--cursor", string({ metavar: "CURSOR" }))),
+      limit: optional(option("--limit", integer({ metavar: "LIMIT" }))),
+    })),
+    command("update", object({
+      cmd: constant("barriers-update" as const),
+      barrierId: option("--barrier-id", string({ metavar: "BARRIER_ID" })),
+      primaryUsergroupId: option("--primary-usergroup-id", string({ metavar: "USERGROUP_ID" })),
+      barrieredFromUsergroupIds: option("--barriered-from-usergroup-ids", string({ metavar: "USERGROUP_IDS" })),
+    })),
+  ),
+);
+
+// ---------------------------------------------------------------------------
+// Emoji commands
+// ---------------------------------------------------------------------------
+
+const emojiCommands = command(
+  "emoji",
+  or(
+    command("add", object({
+      cmd: constant("emoji-add" as const),
+      name: option("--name", string({ metavar: "NAME" })),
+      url: option("--url", string({ metavar: "URL" })),
+    })),
+    command("add-alias", object({
+      cmd: constant("emoji-add-alias" as const),
+      name: option("--name", string({ metavar: "NAME" })),
+      aliasFor: option("--alias-for", string({ metavar: "ALIAS_FOR" })),
+    })),
+    command("list", object({
+      cmd: constant("emoji-list" as const),
+      cursor: optional(option("--cursor", string({ metavar: "CURSOR" }))),
+      limit: optional(option("--limit", integer({ metavar: "LIMIT" }))),
+    })),
+    command("remove", object({
+      cmd: constant("emoji-remove" as const),
+      name: option("--name", string({ metavar: "NAME" })),
+    })),
+    command("rename", object({
+      cmd: constant("emoji-rename" as const),
+      name: option("--name", string({ metavar: "NAME" })),
+      newName: option("--new-name", string({ metavar: "NEW_NAME" })),
+    })),
+  ),
+);
+
+// ---------------------------------------------------------------------------
+// Roles commands
+// ---------------------------------------------------------------------------
+
+const rolesCommands = command(
+  "roles",
+  or(
+    command("add-assignments", object({
+      cmd: constant("roles-add-assignments" as const),
+      roleId: option("--role-id", string({ metavar: "ROLE_ID" })),
+      entityIds: option("--entity-ids", string({ metavar: "ENTITY_IDS" })),
+      userIds: option("--user-ids", string({ metavar: "USER_IDS" })),
+    })),
+    command("list-assignments", object({
+      cmd: constant("roles-list-assignments" as const),
+      entityIds: optional(option("--entity-ids", string({ metavar: "ENTITY_IDS" }))),
+      roleIds: optional(option("--role-ids", string({ metavar: "ROLE_IDS" }))),
+      cursor: optional(option("--cursor", string({ metavar: "CURSOR" }))),
+      limit: optional(option("--limit", integer({ metavar: "LIMIT" }))),
+      sortDir: optional(option("--sort-dir", string({ metavar: "DIR" }))),
+    })),
+    command("remove-assignments", object({
+      cmd: constant("roles-remove-assignments" as const),
+      roleId: option("--role-id", string({ metavar: "ROLE_ID" })),
+      entityIds: option("--entity-ids", string({ metavar: "ENTITY_IDS" })),
+      userIds: option("--user-ids", string({ metavar: "USER_IDS" })),
+    })),
+  ),
+);
+
+// ---------------------------------------------------------------------------
+// Usergroups commands
+// ---------------------------------------------------------------------------
+
+const usergroupsCommands = command(
+  "usergroups",
+  or(
+    command("add-channels", object({
+      cmd: constant("usergroups-add-channels" as const),
+      usergroupId: option("--usergroup-id", string({ metavar: "USERGROUP_ID" })),
+      channelIds: option("--channel-ids", string({ metavar: "CHANNEL_IDS" })),
+      teamId: optional(option("--team-id", string({ metavar: "TEAM_ID" }))),
+    })),
+    command("add-teams", object({
+      cmd: constant("usergroups-add-teams" as const),
+      usergroupId: option("--usergroup-id", string({ metavar: "USERGROUP_ID" })),
+      teamIds: option("--team-ids", string({ metavar: "TEAM_IDS" })),
+      autoProvision: optional(option("--auto-provision", boolValueParser)),
+    })),
+    command("list-channels", object({
+      cmd: constant("usergroups-list-channels" as const),
+      usergroupId: option("--usergroup-id", string({ metavar: "USERGROUP_ID" })),
+      teamId: optional(option("--team-id", string({ metavar: "TEAM_ID" }))),
+      includeNumMembers: optional(option("--include-num-members", boolValueParser)),
+    })),
+    command("remove-channels", object({
+      cmd: constant("usergroups-remove-channels" as const),
+      usergroupId: option("--usergroup-id", string({ metavar: "USERGROUP_ID" })),
+      channelIds: option("--channel-ids", string({ metavar: "CHANNEL_IDS" })),
+    })),
+  ),
+);
+
+// ---------------------------------------------------------------------------
 // SCIM Users commands
 // ---------------------------------------------------------------------------
 
@@ -844,7 +1083,7 @@ const rootParser = or(
   or(tokenCommands, teamsCommands, usersCommands),
   or(conversationsCommands, appsCommands),
   or(inviteRequestsCommands, workflowsCommands, functionsCommands),
-  or(scimUsersCommands, scimGroupsCommands),
+  or(scimUsersCommands, scimGroupsCommands, authPolicyCommands, barriersCommands, emojiCommands, rolesCommands, usergroupsCommands),
 );
 
 // ---------------------------------------------------------------------------
@@ -952,6 +1191,21 @@ switch (config.cmd) {
     console.log("Team discoverability updated.");
     break;
   }
+  case "teams-settings-set-default-channels": {
+    const client = await createSlackClient(store, profileFlag);
+    const defaultChannelParts = config.channelIds.split(",");
+    const defaultChannelFirst = defaultChannelParts[0];
+    if (defaultChannelFirst === undefined || defaultChannelFirst === "") {
+      throw new Error("--channel-ids must not be empty");
+    }
+    const defaultChannelIds: [string, ...string[]] = [defaultChannelFirst, ...defaultChannelParts.slice(1)];
+    await executeSetDefaultChannels(client, {
+      teamId: config.teamId,
+      channelIds: defaultChannelIds,
+    });
+    console.log("Team default channels updated.");
+    break;
+  }
   case "users-list": {
     const client = await createSlackClient(store, profileFlag);
     const users = await executeUsersList(client, {
@@ -1033,6 +1287,94 @@ switch (config.cmd) {
       webOnly: config.webOnly,
     });
     console.log(`Session reset for user '${config.userId}'.`);
+    break;
+  }
+  case "users-session-clear-settings": {
+    const client = await createSlackClient(store, profileFlag);
+    const parts = config.userIds.split(",");
+    const first = parts[0];
+    if (first === undefined || first === "") throw new Error("--user-ids must not be empty");
+    await executeUsersSessionClearSettings(client, { userIds: [first, ...parts.slice(1)] });
+    console.log("Session settings cleared.");
+    break;
+  }
+  case "users-session-get-settings": {
+    const client = await createSlackClient(store, profileFlag);
+    const parts = config.userIds.split(",");
+    const first = parts[0];
+    if (first === undefined || first === "") throw new Error("--user-ids must not be empty");
+    const settings = await executeUsersSessionGetSettings(client, { userIds: [first, ...parts.slice(1)] });
+    console.log(JSON.stringify(settings, null, 2));
+    break;
+  }
+  case "users-session-invalidate": {
+    const client = await createSlackClient(store, profileFlag);
+    await executeUsersSessionInvalidate(client, {
+      teamId: config.teamId,
+      sessionId: config.sessionId,
+    });
+    console.log(`Session '${config.sessionId}' invalidated.`);
+    break;
+  }
+  case "users-session-list": {
+    const client = await createSlackClient(store, profileFlag);
+    const sessions = await executeUsersSessionList(client, {
+      teamId: config.teamId,
+      userId: config.userId,
+      cursor: config.cursor,
+      limit: config.limit,
+    });
+    const rows = sessions.map((s) => ({
+      session_id: s.session_id ?? "",
+      user_id: s.user_id ?? "",
+      team_id: s.team_id ?? "",
+    }));
+    console.log(formatOutput(rows, ["session_id", "user_id", "team_id"], outputFormat));
+    break;
+  }
+  case "users-session-reset-bulk": {
+    const client = await createSlackClient(store, profileFlag);
+    const parts = config.userIds.split(",");
+    const first = parts[0];
+    if (first === undefined || first === "") throw new Error("--user-ids must not be empty");
+    await executeUsersSessionResetBulk(client, {
+      userIds: [first, ...parts.slice(1)],
+      mobileOnly: config.mobileOnly,
+      webOnly: config.webOnly,
+    });
+    console.log("Bulk session reset requested.");
+    break;
+  }
+  case "users-session-set-settings": {
+    const client = await createSlackClient(store, profileFlag);
+    const parts = config.userIds.split(",");
+    const first = parts[0];
+    if (first === undefined || first === "") throw new Error("--user-ids must not be empty");
+    await executeUsersSessionSetSettings(client, {
+      userIds: [first, ...parts.slice(1)],
+      desktopAppBrowserQuit: config.desktopAppBrowserQuit,
+      duration: config.duration,
+    });
+    console.log("Session settings updated.");
+    break;
+  }
+  case "users-set-expiration": {
+    const client = await createSlackClient(store, profileFlag);
+    await executeUsersSetExpiration(client, {
+      userId: config.userId,
+      expirationTs: config.expirationTs,
+      teamId: config.teamId,
+    });
+    console.log(`User '${config.userId}' expiration set.`);
+    break;
+  }
+  case "users-unsupported-versions-export": {
+    const client = await createSlackClient(store, profileFlag);
+    await executeUsersUnsupportedVersionsExport(client, {
+      dateEndOfSupport: config.dateEndOfSupport,
+      dateSessionsStarted: config.dateSessionsStarted,
+    });
+    console.log("Unsupported versions export requested.");
     break;
   }
   case "conversations-archive": {
@@ -1702,6 +2044,240 @@ switch (config.cmd) {
     const client = await createScimClient(store, profileFlag);
     await executeScimGroupsDelete(client, { id: config.id });
     console.log(`Group '${config.id}' deleted.`);
+    break;
+  }
+  case "auth-policy-assign-entities": {
+    const client = await createSlackClient(store, profileFlag);
+    const parts = config.entityIds.split(",");
+    const first = parts[0];
+    if (first === undefined || first === "") throw new Error("--entity-ids must not be empty");
+    const entityIds: [string, ...string[]] = [first, ...parts.slice(1)];
+    if (config.entityType !== "USER") throw new Error('--entity-type must be "USER"');
+    if (config.policyName !== "email_password") throw new Error('--policy-name must be "email_password"');
+    await executeAuthPolicyAssignEntities(client, {
+      entityIds,
+      entityType: "USER",
+      policyName: "email_password",
+    });
+    console.log(`Assigned ${entityIds.length} entities to policy '${config.policyName}'.`);
+    break;
+  }
+  case "auth-policy-get-entities": {
+    const client = await createSlackClient(store, profileFlag);
+    if (config.entityType !== undefined && config.entityType !== "USER") {
+      throw new Error('--entity-type must be "USER"');
+    }
+    if (config.policyName !== "email_password") throw new Error('--policy-name must be "email_password"');
+    const entities = await executeAuthPolicyGetEntities(client, {
+      policyName: "email_password",
+      entityType: config.entityType === "USER" ? "USER" : undefined,
+      cursor: config.cursor,
+      limit: config.limit,
+    });
+    const rows = entities.map((e) => ({
+      entity_id: e.entity_id ?? "",
+      entity_type: e.entity_type ?? "",
+    }));
+    console.log(formatOutput(rows, ["entity_id", "entity_type"], outputFormat));
+    break;
+  }
+  case "auth-policy-remove-entities": {
+    const client = await createSlackClient(store, profileFlag);
+    const parts = config.entityIds.split(",");
+    const first = parts[0];
+    if (first === undefined || first === "") throw new Error("--entity-ids must not be empty");
+    const entityIds: [string, ...string[]] = [first, ...parts.slice(1)];
+    if (config.entityType !== "USER") throw new Error('--entity-type must be "USER"');
+    if (config.policyName !== "email_password") throw new Error('--policy-name must be "email_password"');
+    await executeAuthPolicyRemoveEntities(client, {
+      entityIds,
+      entityType: "USER",
+      policyName: "email_password",
+    });
+    console.log(`Removed ${entityIds.length} entities from policy '${config.policyName}'.`);
+    break;
+  }
+  case "barriers-create": {
+    const client = await createSlackClient(store, profileFlag);
+    const parts = config.barrieredFromUsergroupIds.split(",");
+    const first = parts[0];
+    if (first === undefined || first === "") throw new Error("--barriered-from-usergroup-ids must not be empty");
+    const barrieredFromUsergroupIds = [first, ...parts.slice(1)];
+    const result = await executeBarriersCreate(client, {
+      primaryUsergroupId: config.primaryUsergroupId,
+      barrieredFromUsergroupIds,
+    });
+    console.log(JSON.stringify(result, null, 2));
+    break;
+  }
+  case "barriers-delete": {
+    const client = await createSlackClient(store, profileFlag);
+    await executeBarriersDelete(client, { barrierId: config.barrierId });
+    console.log(`Barrier '${config.barrierId}' deleted.`);
+    break;
+  }
+  case "barriers-list": {
+    const client = await createSlackClient(store, profileFlag);
+    const barriers = await executeBarriersList(client, { cursor: config.cursor, limit: config.limit });
+    const rows = barriers.map((b) => ({
+      id: b.id ?? "",
+      primary_usergroup_id: b.primary_usergroup?.id ?? "",
+    }));
+    console.log(formatOutput(rows, ["id", "primary_usergroup_id"], outputFormat));
+    break;
+  }
+  case "barriers-update": {
+    const client = await createSlackClient(store, profileFlag);
+    const parts = config.barrieredFromUsergroupIds.split(",");
+    const first = parts[0];
+    if (first === undefined || first === "") throw new Error("--barriered-from-usergroup-ids must not be empty");
+    const barrieredFromUsergroupIds = [first, ...parts.slice(1)];
+    const result = await executeBarriersUpdate(client, {
+      barrierId: config.barrierId,
+      primaryUsergroupId: config.primaryUsergroupId,
+      barrieredFromUsergroupIds,
+    });
+    console.log(JSON.stringify(result, null, 2));
+    break;
+  }
+  case "emoji-add": {
+    const client = await createSlackClient(store, profileFlag);
+    await executeEmojiAdd(client, { name: config.name, url: config.url });
+    console.log(`Emoji '${config.name}' added.`);
+    break;
+  }
+  case "emoji-add-alias": {
+    const client = await createSlackClient(store, profileFlag);
+    await executeEmojiAddAlias(client, { name: config.name, aliasFor: config.aliasFor });
+    console.log(`Alias '${config.name}' for '${config.aliasFor}' added.`);
+    break;
+  }
+  case "emoji-list": {
+    const client = await createSlackClient(store, profileFlag);
+    const rows = await executeEmojiList(client, { cursor: config.cursor, limit: config.limit });
+    console.log(formatOutput(rows, ["name", "url"], outputFormat));
+    break;
+  }
+  case "emoji-remove": {
+    const client = await createSlackClient(store, profileFlag);
+    await executeEmojiRemove(client, { name: config.name });
+    console.log(`Emoji '${config.name}' removed.`);
+    break;
+  }
+  case "emoji-rename": {
+    const client = await createSlackClient(store, profileFlag);
+    await executeEmojiRename(client, { name: config.name, newName: config.newName });
+    console.log(`Emoji renamed '${config.name}' -> '${config.newName}'.`);
+    break;
+  }
+  case "roles-add-assignments": {
+    const client = await createSlackClient(store, profileFlag);
+    const entityParts = config.entityIds.split(",");
+    const userParts = config.userIds.split(",");
+    const eFirst = entityParts[0];
+    const uFirst = userParts[0];
+    if (eFirst === undefined || eFirst === "") throw new Error("--entity-ids must not be empty");
+    if (uFirst === undefined || uFirst === "") throw new Error("--user-ids must not be empty");
+    await executeRolesAddAssignments(client, {
+      roleId: config.roleId,
+      entityIds: [eFirst, ...entityParts.slice(1)],
+      userIds: [uFirst, ...userParts.slice(1)],
+    });
+    console.log(`Role '${config.roleId}' assigned.`);
+    break;
+  }
+  case "roles-list-assignments": {
+    const client = await createSlackClient(store, profileFlag);
+    const sortDir =
+      config.sortDir === "asc" || config.sortDir === "desc" ? config.sortDir : undefined;
+    if (config.sortDir !== undefined && sortDir === undefined) {
+      throw new Error('--sort-dir must be "asc" or "desc"');
+    }
+    const assignments = await executeRolesListAssignments(client, {
+      entityIds: config.entityIds?.split(","),
+      roleIds: config.roleIds?.split(","),
+      cursor: config.cursor,
+      limit: config.limit,
+      sortDir,
+    });
+    const rows = assignments.map((a) => ({
+      role_id: a.role_id ?? "",
+      entity_id: a.entity_id ?? "",
+      user_id: a.user_id ?? "",
+    }));
+    console.log(formatOutput(rows, ["role_id", "entity_id", "user_id"], outputFormat));
+    break;
+  }
+  case "roles-remove-assignments": {
+    const client = await createSlackClient(store, profileFlag);
+    const entityParts = config.entityIds.split(",");
+    const userParts = config.userIds.split(",");
+    const eFirst = entityParts[0];
+    const uFirst = userParts[0];
+    if (eFirst === undefined || eFirst === "") throw new Error("--entity-ids must not be empty");
+    if (uFirst === undefined || uFirst === "") throw new Error("--user-ids must not be empty");
+    await executeRolesRemoveAssignments(client, {
+      roleId: config.roleId,
+      entityIds: [eFirst, ...entityParts.slice(1)],
+      userIds: [uFirst, ...userParts.slice(1)],
+    });
+    console.log(`Role '${config.roleId}' removed.`);
+    break;
+  }
+  case "usergroups-add-channels": {
+    const client = await createSlackClient(store, profileFlag);
+    const channelIds = config.channelIds.split(",");
+    if (channelIds.length === 0 || channelIds[0] === "") {
+      throw new Error("--channel-ids must not be empty");
+    }
+    await executeUsergroupsAddChannels(client, {
+      usergroupId: config.usergroupId,
+      channelIds,
+      teamId: config.teamId,
+    });
+    console.log(`Channels added to usergroup '${config.usergroupId}'.`);
+    break;
+  }
+  case "usergroups-add-teams": {
+    const client = await createSlackClient(store, profileFlag);
+    const teamIds = config.teamIds.split(",");
+    if (teamIds.length === 0 || teamIds[0] === "") {
+      throw new Error("--team-ids must not be empty");
+    }
+    await executeUsergroupsAddTeams(client, {
+      usergroupId: config.usergroupId,
+      teamIds,
+      autoProvision: config.autoProvision,
+    });
+    console.log(`Teams added to usergroup '${config.usergroupId}'.`);
+    break;
+  }
+  case "usergroups-list-channels": {
+    const client = await createSlackClient(store, profileFlag);
+    const channels = await executeUsergroupsListChannels(client, {
+      usergroupId: config.usergroupId,
+      teamId: config.teamId,
+      includeNumMembers: config.includeNumMembers,
+    });
+    const rows = channels.map((c) => ({
+      id: c.id ?? "",
+      name: c.name ?? "",
+      num_members: c.num_members ?? "",
+    }));
+    console.log(formatOutput(rows, ["id", "name", "num_members"], outputFormat));
+    break;
+  }
+  case "usergroups-remove-channels": {
+    const client = await createSlackClient(store, profileFlag);
+    const channelIds = config.channelIds.split(",");
+    if (channelIds.length === 0 || channelIds[0] === "") {
+      throw new Error("--channel-ids must not be empty");
+    }
+    await executeUsergroupsRemoveChannels(client, {
+      usergroupId: config.usergroupId,
+      channelIds,
+    });
+    console.log(`Channels removed from usergroup '${config.usergroupId}'.`);
     break;
   }
   default: {

@@ -13,7 +13,15 @@
 | `users set-admin` | 管理者に昇格 | `admin.users:write` |
 | `users set-owner` | オーナーに昇格 | `admin.users:write` |
 | `users set-regular` | 一般ユーザーに降格 | `admin.users:write` |
+| `users set-expiration` | ゲストアカウント有効期限設定 | `admin.users:write` |
+| `users unsupported-versions export` | 非対応 Slack バージョンのユーザー一覧エクスポート | `admin.users:read` |
 | `users session reset` | セッションリセット | `admin.users:write` |
+| `users session list` | アクティブセッション一覧 | `admin.users:read` |
+| `users session invalidate` | セッション無効化 | `admin.users:write` |
+| `users session reset-bulk` | セッション一括リセット | `admin.users:write` |
+| `users session get-settings` | セッション設定取得 | `admin.users:read` |
+| `users session set-settings` | セッション設定変更 | `admin.users:write` |
+| `users session clear-settings` | セッション設定クリア | `admin.users:write` |
 
 ## 使用例
 

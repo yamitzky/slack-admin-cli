@@ -2,8 +2,8 @@
 name: slack-admin-cli-skill
 description: >-
   Slack Admin CLI (`sladm`) を使って Slack Admin API / SCIM API を操作する。
-  チーム管理・ユーザー管理・チャンネル管理・アプリ管理・ワークフロー管理・招待リクエスト管理・関数管理・SCIMユーザー/グループ管理など、
-  Slack ワークスペースの管理操作を行いたいときに使う。
+  チーム管理・ユーザー管理・チャンネル管理・アプリ管理・ワークフロー管理・招待リクエスト管理・関数管理・SCIMユーザー/グループ管理・
+  認証ポリシー・情報バリア・絵文字・ロール・ユーザーグループ管理など、Slack ワークスペースの管理操作を行いたいときに使う。
 ---
 
 # Slack Admin CLI (sladm)
@@ -75,6 +75,35 @@ sladm --profile staging users list
 | `functions` | カスタム関数の一覧・権限設定 | [functions](recipes/functions.md) |
 | `scim-users` | SCIM ユーザー管理（作成・更新・無効化） | [scim-users](recipes/scim-users.md) |
 | `scim-groups` | SCIM グループ管理（作成・更新・削除） | [scim-groups](recipes/scim-groups.md) |
+| `auth-policy` | 認証ポリシーへのエンティティ割り当て | — |
+| `barriers` | 情報バリア（Information Barriers）の作成・更新・削除 | — |
+| `emoji` | カスタム絵文字の追加・エイリアス・リネーム・削除 | — |
+| `roles` | システムロール割り当ての追加・一覧・削除 | — |
+| `usergroups` | ユーザーグループのチーム・デフォルトチャンネル管理 | — |
+
+## 新規グループの使用例
+
+レシピ未整備のグループについては `--help` で詳細を確認すること。代表的な例:
+
+```bash
+# カスタム絵文字一覧
+sladm emoji list --json
+
+# カスタム絵文字追加（URL 指定）
+sladm emoji add --name party-parrot --url https://example.com/parrot.gif
+
+# 情報バリア一覧
+sladm barriers list
+
+# ロール割り当て一覧（例: チャンネル管理者 ロール）
+sladm roles list-assignments --role-id Rl0A
+
+# ユーザーグループにデフォルトチャンネルを追加
+sladm usergroups add-channels --usergroup-id S123 --team-id T123 --channel-ids C1,C2
+
+# 認証ポリシーにエンティティを割り当て
+sladm auth-policy assign-entities --policy-name email_password --entity-type user --entity-ids U1,U2
+```
 
 ## トラブルシューティング
 

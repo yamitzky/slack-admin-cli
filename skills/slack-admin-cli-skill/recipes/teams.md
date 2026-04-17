@@ -15,6 +15,7 @@
 | `teams settings set-icon` | アイコン設定 | `admin.teams:write` |
 | `teams settings set-description` | 説明文変更 | `admin.teams:write` |
 | `teams settings set-discoverability` | 公開設定変更 | `admin.teams:write` |
+| `teams settings set-default-channels` | デフォルトチャンネル設定 | `admin.teams:write` |
 
 ## 使用例
 

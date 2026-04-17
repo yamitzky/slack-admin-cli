@@ -6,7 +6,7 @@ CLI & Agent Skill for managing Slack Enterprise Grid / Business+ workspaces via 
 
 ## Features
 
-- **79 admin commands** covering 10 API groups: teams, users, conversations, apps, invite-requests, workflows, functions, scim-users, scim-groups, and token management
+- **107 admin commands** covering 15 API groups: teams, users, conversations, apps, invite-requests, workflows, functions, scim-users, scim-groups, auth-policy, barriers, emoji, roles, usergroups, and token management
 - **Agent Skill** — ships with a Claude Code / Codex skill so AI agents can drive Slack admin tasks using the CLI as a tool
 - **Bulk operations** — archive, delete, or move hundreds of channels at once with `conversations bulk-*`
 - **Output formats** — table (human), JSON (programmatic), TSV (pipe-friendly)
@@ -162,6 +162,7 @@ sladm teams list --plain         # TSV (for scripting)
 | `teams settings set-icon` | Set team icon |
 | `teams settings set-description` | Set description |
 | `teams settings set-discoverability` | Set discoverability |
+| `teams settings set-default-channels` | Set default channels |
 
 ### Users
 
@@ -174,7 +175,15 @@ sladm teams list --plain         # TSV (for scripting)
 | `users set-admin` | Promote to admin |
 | `users set-owner` | Promote to owner |
 | `users set-regular` | Demote to regular user |
+| `users set-expiration` | Set guest account expiration |
+| `users unsupported-versions export` | Export users on unsupported Slack versions |
 | `users session reset` | Reset session |
+| `users session list` | List active sessions |
+| `users session invalidate` | Invalidate a session |
+| `users session reset-bulk` | Bulk reset sessions |
+| `users session get-settings` | Get session settings |
+| `users session set-settings` | Set session settings |
+| `users session clear-settings` | Clear session settings |
 
 ### Conversations
 
@@ -269,6 +278,50 @@ sladm teams list --plain         # TSV (for scripting)
 | `functions list` | List functions |
 | `functions permissions lookup` | Lookup permissions |
 | `functions permissions set` | Set permissions |
+
+### Auth Policy
+
+| Command | Description |
+|---------|-------------|
+| `auth-policy assign-entities` | Assign entities to an auth policy |
+| `auth-policy get-entities` | List entities assigned to a policy |
+| `auth-policy remove-entities` | Remove entities from a policy |
+
+### Barriers
+
+| Command | Description |
+|---------|-------------|
+| `barriers create` | Create an information barrier |
+| `barriers delete` | Delete a barrier |
+| `barriers list` | List barriers |
+| `barriers update` | Update a barrier |
+
+### Emoji
+
+| Command | Description |
+|---------|-------------|
+| `emoji add` | Add a custom emoji |
+| `emoji add-alias` | Add an emoji alias |
+| `emoji list` | List custom emoji |
+| `emoji remove` | Remove an emoji |
+| `emoji rename` | Rename an emoji |
+
+### Roles
+
+| Command | Description |
+|---------|-------------|
+| `roles add-assignments` | Add role assignments |
+| `roles list-assignments` | List role assignments |
+| `roles remove-assignments` | Remove role assignments |
+
+### Usergroups
+
+| Command | Description |
+|---------|-------------|
+| `usergroups add-channels` | Add default channels to a usergroup |
+| `usergroups add-teams` | Add teams to a usergroup |
+| `usergroups list-channels` | List default channels of a usergroup |
+| `usergroups remove-channels` | Remove default channels from a usergroup |
 
 ## Required Scopes
 
