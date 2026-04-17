@@ -82,6 +82,10 @@ import { executeFunctionsList } from "./commands/functions/list";
 import { executeFunctionsPermissionsLookup } from "./commands/functions/permissions/lookup";
 import { executeFunctionsPermissionsSet } from "./commands/functions/permissions/set";
 
+import { executeAuthPolicyAssignEntities } from "./commands/auth-policy/assign-entities";
+import { executeAuthPolicyGetEntities } from "./commands/auth-policy/get-entities";
+import { executeAuthPolicyRemoveEntities } from "./commands/auth-policy/remove-entities";
+
 import { executeScimUsersList } from "./commands/scim-users/list";
 import { executeScimUsersGet } from "./commands/scim-users/get";
 import { executeScimUsersCreate } from "./commands/scim-users/create";
@@ -758,6 +762,35 @@ const functionsCommands = command(
 );
 
 // ---------------------------------------------------------------------------
+// Auth Policy commands
+// ---------------------------------------------------------------------------
+
+const authPolicyCommands = command(
+  "auth-policy",
+  or(
+    command("assign-entities", object({
+      cmd: constant("auth-policy-assign-entities" as const),
+      entityIds: option("--entity-ids", string({ metavar: "ENTITY_IDS" })),
+      entityType: option("--entity-type", string({ metavar: "ENTITY_TYPE" })),
+      policyName: option("--policy-name", string({ metavar: "POLICY_NAME" })),
+    })),
+    command("get-entities", object({
+      cmd: constant("auth-policy-get-entities" as const),
+      policyName: option("--policy-name", string({ metavar: "POLICY_NAME" })),
+      entityType: optional(option("--entity-type", string({ metavar: "ENTITY_TYPE" }))),
+      cursor: optional(option("--cursor", string({ metavar: "CURSOR" }))),
+      limit: optional(option("--limit", integer({ metavar: "LIMIT" }))),
+    })),
+    command("remove-entities", object({
+      cmd: constant("auth-policy-remove-entities" as const),
+      entityIds: option("--entity-ids", string({ metavar: "ENTITY_IDS" })),
+      entityType: option("--entity-type", string({ metavar: "ENTITY_TYPE" })),
+      policyName: option("--policy-name", string({ metavar: "POLICY_NAME" })),
+    })),
+  ),
+);
+
+// ---------------------------------------------------------------------------
 // SCIM Users commands
 // ---------------------------------------------------------------------------
 
@@ -844,7 +877,7 @@ const rootParser = or(
   or(tokenCommands, teamsCommands, usersCommands),
   or(conversationsCommands, appsCommands),
   or(inviteRequestsCommands, workflowsCommands, functionsCommands),
-  or(scimUsersCommands, scimGroupsCommands),
+  or(scimUsersCommands, scimGroupsCommands, authPolicyCommands),
 );
 
 // ---------------------------------------------------------------------------
@@ -1702,6 +1735,51 @@ switch (config.cmd) {
     const client = await createScimClient(store, profileFlag);
     await executeScimGroupsDelete(client, { id: config.id });
     console.log(`Group '${config.id}' deleted.`);
+    break;
+  }
+  case "auth-policy-assign-entities": {
+    const client = await createSlackClient(store, profileFlag);
+    const entityIds = config.entityIds.split(",");
+    if (config.entityType !== "USER") throw new Error('--entity-type must be "USER"');
+    if (config.policyName !== "email_password") throw new Error('--policy-name must be "email_password"');
+    await executeAuthPolicyAssignEntities(client, {
+      entityIds,
+      entityType: "USER",
+      policyName: "email_password",
+    });
+    console.log(`Assigned ${entityIds.length} entities to policy '${config.policyName}'.`);
+    break;
+  }
+  case "auth-policy-get-entities": {
+    const client = await createSlackClient(store, profileFlag);
+    if (config.entityType !== undefined && config.entityType !== "USER") {
+      throw new Error('--entity-type must be "USER"');
+    }
+    if (config.policyName !== "email_password") throw new Error('--policy-name must be "email_password"');
+    const entities = await executeAuthPolicyGetEntities(client, {
+      policyName: "email_password",
+      entityType: config.entityType === "USER" ? "USER" : undefined,
+      cursor: config.cursor,
+      limit: config.limit,
+    });
+    const rows = (entities as Array<{ entity_id?: string; entity_type?: string }>).map((e) => ({
+      entity_id: e.entity_id ?? "",
+      entity_type: e.entity_type ?? "",
+    }));
+    console.log(formatOutput(rows, ["entity_id", "entity_type"], outputFormat));
+    break;
+  }
+  case "auth-policy-remove-entities": {
+    const client = await createSlackClient(store, profileFlag);
+    const entityIds = config.entityIds.split(",");
+    if (config.entityType !== "USER") throw new Error('--entity-type must be "USER"');
+    if (config.policyName !== "email_password") throw new Error('--policy-name must be "email_password"');
+    await executeAuthPolicyRemoveEntities(client, {
+      entityIds,
+      entityType: "USER",
+      policyName: "email_password",
+    });
+    console.log(`Removed ${entityIds.length} entities from policy '${config.policyName}'.`);
     break;
   }
   default: {
