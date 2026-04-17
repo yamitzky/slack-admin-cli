@@ -28,6 +28,12 @@ import { executeUsersSetAdmin } from "./commands/users/set-admin";
 import { executeUsersSetOwner } from "./commands/users/set-owner";
 import { executeUsersSetRegular } from "./commands/users/set-regular";
 import { executeSessionReset } from "./commands/users/session-reset";
+import { executeUsersSessionClearSettings } from "./commands/users/session/clear-settings";
+import { executeUsersSessionGetSettings } from "./commands/users/session/get-settings";
+import { executeUsersSessionInvalidate } from "./commands/users/session/invalidate";
+import { executeUsersSessionList } from "./commands/users/session/list";
+import { executeUsersSessionResetBulk } from "./commands/users/session/reset-bulk";
+import { executeUsersSessionSetSettings } from "./commands/users/session/set-settings";
 import { executeUsersSetExpiration } from "./commands/users/set-expiration";
 import { executeUsersUnsupportedVersionsExport } from "./commands/users/unsupported-versions/export";
 
@@ -354,12 +360,46 @@ const usersCommands = command(
       teamId: option("--team-id", string({ metavar: "TEAM_ID" })),
       userId: option("--user-id", string({ metavar: "USER_ID" })),
     })),
-    command("session", command("reset", object({
-      cmd: constant("users-session-reset" as const),
-      userId: option("--user-id", string({ metavar: "USER_ID" })),
-      mobileOnly: optional(option("--mobile-only", boolValueParser)),
-      webOnly: optional(option("--web-only", boolValueParser)),
-    }))),
+    command("session", or(
+      command("reset", object({
+        cmd: constant("users-session-reset" as const),
+        userId: option("--user-id", string({ metavar: "USER_ID" })),
+        mobileOnly: optional(option("--mobile-only", boolValueParser)),
+        webOnly: optional(option("--web-only", boolValueParser)),
+      })),
+      command("clear-settings", object({
+        cmd: constant("users-session-clear-settings" as const),
+        userIds: option("--user-ids", string({ metavar: "USER_IDS" })),
+      })),
+      command("get-settings", object({
+        cmd: constant("users-session-get-settings" as const),
+        userIds: option("--user-ids", string({ metavar: "USER_IDS" })),
+      })),
+      command("invalidate", object({
+        cmd: constant("users-session-invalidate" as const),
+        teamId: option("--team-id", string({ metavar: "TEAM_ID" })),
+        sessionId: option("--session-id", string({ metavar: "SESSION_ID" })),
+      })),
+      command("list", object({
+        cmd: constant("users-session-list" as const),
+        teamId: optional(option("--team-id", string({ metavar: "TEAM_ID" }))),
+        userId: optional(option("--user-id", string({ metavar: "USER_ID" }))),
+        cursor: optional(option("--cursor", string({ metavar: "CURSOR" }))),
+        limit: optional(option("--limit", integer({ metavar: "LIMIT" }))),
+      })),
+      command("reset-bulk", object({
+        cmd: constant("users-session-reset-bulk" as const),
+        userIds: option("--user-ids", string({ metavar: "USER_IDS" })),
+        mobileOnly: optional(option("--mobile-only", boolValueParser)),
+        webOnly: optional(option("--web-only", boolValueParser)),
+      })),
+      command("set-settings", object({
+        cmd: constant("users-session-set-settings" as const),
+        userIds: option("--user-ids", string({ metavar: "USER_IDS" })),
+        desktopAppBrowserQuit: optional(option("--desktop-app-browser-quit", boolValueParser)),
+        duration: optional(option("--duration", integer({ metavar: "SECONDS" }))),
+      })),
+    )),
     command("set-expiration", object({
       cmd: constant("users-set-expiration" as const),
       userId: option("--user-id", string({ metavar: "USER_ID" })),
@@ -1247,6 +1287,75 @@ switch (config.cmd) {
       webOnly: config.webOnly,
     });
     console.log(`Session reset for user '${config.userId}'.`);
+    break;
+  }
+  case "users-session-clear-settings": {
+    const client = await createSlackClient(store, profileFlag);
+    const parts = config.userIds.split(",");
+    const first = parts[0];
+    if (first === undefined || first === "") throw new Error("--user-ids must not be empty");
+    await executeUsersSessionClearSettings(client, { userIds: [first, ...parts.slice(1)] });
+    console.log("Session settings cleared.");
+    break;
+  }
+  case "users-session-get-settings": {
+    const client = await createSlackClient(store, profileFlag);
+    const parts = config.userIds.split(",");
+    const first = parts[0];
+    if (first === undefined || first === "") throw new Error("--user-ids must not be empty");
+    const settings = await executeUsersSessionGetSettings(client, { userIds: [first, ...parts.slice(1)] });
+    console.log(JSON.stringify(settings, null, 2));
+    break;
+  }
+  case "users-session-invalidate": {
+    const client = await createSlackClient(store, profileFlag);
+    await executeUsersSessionInvalidate(client, {
+      teamId: config.teamId,
+      sessionId: config.sessionId,
+    });
+    console.log(`Session '${config.sessionId}' invalidated.`);
+    break;
+  }
+  case "users-session-list": {
+    const client = await createSlackClient(store, profileFlag);
+    const sessions = await executeUsersSessionList(client, {
+      teamId: config.teamId,
+      userId: config.userId,
+      cursor: config.cursor,
+      limit: config.limit,
+    });
+    const rows = sessions.map((s) => ({
+      session_id: s.session_id ?? "",
+      user_id: s.user_id ?? "",
+      team_id: s.team_id ?? "",
+    }));
+    console.log(formatOutput(rows, ["session_id", "user_id", "team_id"], outputFormat));
+    break;
+  }
+  case "users-session-reset-bulk": {
+    const client = await createSlackClient(store, profileFlag);
+    const parts = config.userIds.split(",");
+    const first = parts[0];
+    if (first === undefined || first === "") throw new Error("--user-ids must not be empty");
+    await executeUsersSessionResetBulk(client, {
+      userIds: [first, ...parts.slice(1)],
+      mobileOnly: config.mobileOnly,
+      webOnly: config.webOnly,
+    });
+    console.log("Bulk session reset requested.");
+    break;
+  }
+  case "users-session-set-settings": {
+    const client = await createSlackClient(store, profileFlag);
+    const parts = config.userIds.split(",");
+    const first = parts[0];
+    if (first === undefined || first === "") throw new Error("--user-ids must not be empty");
+    await executeUsersSessionSetSettings(client, {
+      userIds: [first, ...parts.slice(1)],
+      desktopAppBrowserQuit: config.desktopAppBrowserQuit,
+      duration: config.duration,
+    });
+    console.log("Session settings updated.");
     break;
   }
   case "users-set-expiration": {
