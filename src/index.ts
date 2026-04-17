@@ -28,6 +28,8 @@ import { executeUsersSetAdmin } from "./commands/users/set-admin";
 import { executeUsersSetOwner } from "./commands/users/set-owner";
 import { executeUsersSetRegular } from "./commands/users/set-regular";
 import { executeSessionReset } from "./commands/users/session-reset";
+import { executeUsersSetExpiration } from "./commands/users/set-expiration";
+import { executeUsersUnsupportedVersionsExport } from "./commands/users/unsupported-versions/export";
 
 import { executeConversationsArchive } from "./commands/conversations/archive";
 import { executeConversationsUnarchive } from "./commands/conversations/unarchive";
@@ -357,6 +359,17 @@ const usersCommands = command(
       userId: option("--user-id", string({ metavar: "USER_ID" })),
       mobileOnly: optional(option("--mobile-only", boolValueParser)),
       webOnly: optional(option("--web-only", boolValueParser)),
+    }))),
+    command("set-expiration", object({
+      cmd: constant("users-set-expiration" as const),
+      userId: option("--user-id", string({ metavar: "USER_ID" })),
+      expirationTs: option("--expiration-ts", integer({ metavar: "TIMESTAMP" })),
+      teamId: optional(option("--team-id", string({ metavar: "TEAM_ID" }))),
+    })),
+    command("unsupported-versions", command("export", object({
+      cmd: constant("users-unsupported-versions-export" as const),
+      dateEndOfSupport: optional(option("--date-end-of-support", integer({ metavar: "TIMESTAMP" }))),
+      dateSessionsStarted: optional(option("--date-sessions-started", integer({ metavar: "TIMESTAMP" }))),
     }))),
   ),
 );
@@ -1234,6 +1247,25 @@ switch (config.cmd) {
       webOnly: config.webOnly,
     });
     console.log(`Session reset for user '${config.userId}'.`);
+    break;
+  }
+  case "users-set-expiration": {
+    const client = await createSlackClient(store, profileFlag);
+    await executeUsersSetExpiration(client, {
+      userId: config.userId,
+      expirationTs: config.expirationTs,
+      teamId: config.teamId,
+    });
+    console.log(`User '${config.userId}' expiration set.`);
+    break;
+  }
+  case "users-unsupported-versions-export": {
+    const client = await createSlackClient(store, profileFlag);
+    await executeUsersUnsupportedVersionsExport(client, {
+      dateEndOfSupport: config.dateEndOfSupport,
+      dateSessionsStarted: config.dateSessionsStarted,
+    });
+    console.log("Unsupported versions export requested.");
     break;
   }
   case "conversations-archive": {
