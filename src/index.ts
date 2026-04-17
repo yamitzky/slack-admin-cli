@@ -86,6 +86,11 @@ import { executeAuthPolicyAssignEntities } from "./commands/auth-policy/assign-e
 import { executeAuthPolicyGetEntities } from "./commands/auth-policy/get-entities";
 import { executeAuthPolicyRemoveEntities } from "./commands/auth-policy/remove-entities";
 
+import { executeBarriersCreate } from "./commands/barriers/create";
+import { executeBarriersDelete } from "./commands/barriers/delete";
+import { executeBarriersList } from "./commands/barriers/list";
+import { executeBarriersUpdate } from "./commands/barriers/update";
+
 import { executeScimUsersList } from "./commands/scim-users/list";
 import { executeScimUsersGet } from "./commands/scim-users/get";
 import { executeScimUsersCreate } from "./commands/scim-users/create";
@@ -791,6 +796,36 @@ const authPolicyCommands = command(
 );
 
 // ---------------------------------------------------------------------------
+// Barriers commands
+// ---------------------------------------------------------------------------
+
+const barriersCommands = command(
+  "barriers",
+  or(
+    command("create", object({
+      cmd: constant("barriers-create" as const),
+      primaryUsergroupId: option("--primary-usergroup-id", string({ metavar: "USERGROUP_ID" })),
+      barrieredFromUsergroupIds: option("--barriered-from-usergroup-ids", string({ metavar: "USERGROUP_IDS" })),
+    })),
+    command("delete", object({
+      cmd: constant("barriers-delete" as const),
+      barrierId: option("--barrier-id", string({ metavar: "BARRIER_ID" })),
+    })),
+    command("list", object({
+      cmd: constant("barriers-list" as const),
+      cursor: optional(option("--cursor", string({ metavar: "CURSOR" }))),
+      limit: optional(option("--limit", integer({ metavar: "LIMIT" }))),
+    })),
+    command("update", object({
+      cmd: constant("barriers-update" as const),
+      barrierId: option("--barrier-id", string({ metavar: "BARRIER_ID" })),
+      primaryUsergroupId: option("--primary-usergroup-id", string({ metavar: "USERGROUP_ID" })),
+      barrieredFromUsergroupIds: option("--barriered-from-usergroup-ids", string({ metavar: "USERGROUP_IDS" })),
+    })),
+  ),
+);
+
+// ---------------------------------------------------------------------------
 // SCIM Users commands
 // ---------------------------------------------------------------------------
 
@@ -877,7 +912,7 @@ const rootParser = or(
   or(tokenCommands, teamsCommands, usersCommands),
   or(conversationsCommands, appsCommands),
   or(inviteRequestsCommands, workflowsCommands, functionsCommands),
-  or(scimUsersCommands, scimGroupsCommands, authPolicyCommands),
+  or(scimUsersCommands, scimGroupsCommands, authPolicyCommands, barriersCommands),
 );
 
 // ---------------------------------------------------------------------------
@@ -1786,6 +1821,49 @@ switch (config.cmd) {
       policyName: "email_password",
     });
     console.log(`Removed ${entityIds.length} entities from policy '${config.policyName}'.`);
+    break;
+  }
+  case "barriers-create": {
+    const client = await createSlackClient(store, profileFlag);
+    const parts = config.barrieredFromUsergroupIds.split(",");
+    const first = parts[0];
+    if (first === undefined || first === "") throw new Error("--barriered-from-usergroup-ids must not be empty");
+    const barrieredFromUsergroupIds = [first, ...parts.slice(1)];
+    const result = await executeBarriersCreate(client, {
+      primaryUsergroupId: config.primaryUsergroupId,
+      barrieredFromUsergroupIds,
+    });
+    console.log(JSON.stringify(result, null, 2));
+    break;
+  }
+  case "barriers-delete": {
+    const client = await createSlackClient(store, profileFlag);
+    await executeBarriersDelete(client, { barrierId: config.barrierId });
+    console.log(`Barrier '${config.barrierId}' deleted.`);
+    break;
+  }
+  case "barriers-list": {
+    const client = await createSlackClient(store, profileFlag);
+    const barriers = await executeBarriersList(client, { cursor: config.cursor, limit: config.limit });
+    const rows = barriers.map((b) => ({
+      id: b.id ?? "",
+      primary_usergroup_id: b.primary_usergroup?.id ?? "",
+    }));
+    console.log(formatOutput(rows, ["id", "primary_usergroup_id"], outputFormat));
+    break;
+  }
+  case "barriers-update": {
+    const client = await createSlackClient(store, profileFlag);
+    const parts = config.barrieredFromUsergroupIds.split(",");
+    const first = parts[0];
+    if (first === undefined || first === "") throw new Error("--barriered-from-usergroup-ids must not be empty");
+    const barrieredFromUsergroupIds = [first, ...parts.slice(1)];
+    const result = await executeBarriersUpdate(client, {
+      barrierId: config.barrierId,
+      primaryUsergroupId: config.primaryUsergroupId,
+      barrieredFromUsergroupIds,
+    });
+    console.log(JSON.stringify(result, null, 2));
     break;
   }
   default: {
