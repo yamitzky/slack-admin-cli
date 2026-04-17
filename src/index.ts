@@ -101,6 +101,11 @@ import { executeRolesAddAssignments } from "./commands/roles/add-assignments";
 import { executeRolesListAssignments } from "./commands/roles/list-assignments";
 import { executeRolesRemoveAssignments } from "./commands/roles/remove-assignments";
 
+import { executeUsergroupsAddChannels } from "./commands/usergroups/add-channels";
+import { executeUsergroupsAddTeams } from "./commands/usergroups/add-teams";
+import { executeUsergroupsListChannels } from "./commands/usergroups/list-channels";
+import { executeUsergroupsRemoveChannels } from "./commands/usergroups/remove-channels";
+
 import { executeScimUsersList } from "./commands/scim-users/list";
 import { executeScimUsersGet } from "./commands/scim-users/get";
 import { executeScimUsersCreate } from "./commands/scim-users/create";
@@ -900,6 +905,39 @@ const rolesCommands = command(
 );
 
 // ---------------------------------------------------------------------------
+// Usergroups commands
+// ---------------------------------------------------------------------------
+
+const usergroupsCommands = command(
+  "usergroups",
+  or(
+    command("add-channels", object({
+      cmd: constant("usergroups-add-channels" as const),
+      usergroupId: option("--usergroup-id", string({ metavar: "USERGROUP_ID" })),
+      channelIds: option("--channel-ids", string({ metavar: "CHANNEL_IDS" })),
+      teamId: optional(option("--team-id", string({ metavar: "TEAM_ID" }))),
+    })),
+    command("add-teams", object({
+      cmd: constant("usergroups-add-teams" as const),
+      usergroupId: option("--usergroup-id", string({ metavar: "USERGROUP_ID" })),
+      teamIds: option("--team-ids", string({ metavar: "TEAM_IDS" })),
+      autoProvision: optional(option("--auto-provision", boolValueParser)),
+    })),
+    command("list-channels", object({
+      cmd: constant("usergroups-list-channels" as const),
+      usergroupId: option("--usergroup-id", string({ metavar: "USERGROUP_ID" })),
+      teamId: optional(option("--team-id", string({ metavar: "TEAM_ID" }))),
+      includeNumMembers: optional(option("--include-num-members", boolValueParser)),
+    })),
+    command("remove-channels", object({
+      cmd: constant("usergroups-remove-channels" as const),
+      usergroupId: option("--usergroup-id", string({ metavar: "USERGROUP_ID" })),
+      channelIds: option("--channel-ids", string({ metavar: "CHANNEL_IDS" })),
+    })),
+  ),
+);
+
+// ---------------------------------------------------------------------------
 // SCIM Users commands
 // ---------------------------------------------------------------------------
 
@@ -986,7 +1024,7 @@ const rootParser = or(
   or(tokenCommands, teamsCommands, usersCommands),
   or(conversationsCommands, appsCommands),
   or(inviteRequestsCommands, workflowsCommands, functionsCommands),
-  or(scimUsersCommands, scimGroupsCommands, authPolicyCommands, barriersCommands, emojiCommands, rolesCommands),
+  or(scimUsersCommands, scimGroupsCommands, authPolicyCommands, barriersCommands, emojiCommands, rolesCommands, usergroupsCommands),
 );
 
 // ---------------------------------------------------------------------------
@@ -2022,6 +2060,62 @@ switch (config.cmd) {
       userIds: [uFirst, ...userParts.slice(1)],
     });
     console.log(`Role '${config.roleId}' removed.`);
+    break;
+  }
+  case "usergroups-add-channels": {
+    const client = await createSlackClient(store, profileFlag);
+    const channelIds = config.channelIds.split(",");
+    if (channelIds.length === 0 || channelIds[0] === "") {
+      throw new Error("--channel-ids must not be empty");
+    }
+    await executeUsergroupsAddChannels(client, {
+      usergroupId: config.usergroupId,
+      channelIds,
+      teamId: config.teamId,
+    });
+    console.log(`Channels added to usergroup '${config.usergroupId}'.`);
+    break;
+  }
+  case "usergroups-add-teams": {
+    const client = await createSlackClient(store, profileFlag);
+    const teamIds = config.teamIds.split(",");
+    if (teamIds.length === 0 || teamIds[0] === "") {
+      throw new Error("--team-ids must not be empty");
+    }
+    await executeUsergroupsAddTeams(client, {
+      usergroupId: config.usergroupId,
+      teamIds,
+      autoProvision: config.autoProvision,
+    });
+    console.log(`Teams added to usergroup '${config.usergroupId}'.`);
+    break;
+  }
+  case "usergroups-list-channels": {
+    const client = await createSlackClient(store, profileFlag);
+    const channels = await executeUsergroupsListChannels(client, {
+      usergroupId: config.usergroupId,
+      teamId: config.teamId,
+      includeNumMembers: config.includeNumMembers,
+    });
+    const rows = channels.map((c) => ({
+      id: c.id ?? "",
+      name: c.name ?? "",
+      num_members: c.num_members ?? "",
+    }));
+    console.log(formatOutput(rows, ["id", "name", "num_members"], outputFormat));
+    break;
+  }
+  case "usergroups-remove-channels": {
+    const client = await createSlackClient(store, profileFlag);
+    const channelIds = config.channelIds.split(",");
+    if (channelIds.length === 0 || channelIds[0] === "") {
+      throw new Error("--channel-ids must not be empty");
+    }
+    await executeUsergroupsRemoveChannels(client, {
+      usergroupId: config.usergroupId,
+      channelIds,
+    });
+    console.log(`Channels removed from usergroup '${config.usergroupId}'.`);
     break;
   }
   default: {
