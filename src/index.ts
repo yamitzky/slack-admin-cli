@@ -97,6 +97,10 @@ import { executeEmojiList } from "./commands/emoji/list";
 import { executeEmojiRemove } from "./commands/emoji/remove";
 import { executeEmojiRename } from "./commands/emoji/rename";
 
+import { executeRolesAddAssignments } from "./commands/roles/add-assignments";
+import { executeRolesListAssignments } from "./commands/roles/list-assignments";
+import { executeRolesRemoveAssignments } from "./commands/roles/remove-assignments";
+
 import { executeScimUsersList } from "./commands/scim-users/list";
 import { executeScimUsersGet } from "./commands/scim-users/get";
 import { executeScimUsersCreate } from "./commands/scim-users/create";
@@ -866,6 +870,36 @@ const emojiCommands = command(
 );
 
 // ---------------------------------------------------------------------------
+// Roles commands
+// ---------------------------------------------------------------------------
+
+const rolesCommands = command(
+  "roles",
+  or(
+    command("add-assignments", object({
+      cmd: constant("roles-add-assignments" as const),
+      roleId: option("--role-id", string({ metavar: "ROLE_ID" })),
+      entityIds: option("--entity-ids", string({ metavar: "ENTITY_IDS" })),
+      userIds: option("--user-ids", string({ metavar: "USER_IDS" })),
+    })),
+    command("list-assignments", object({
+      cmd: constant("roles-list-assignments" as const),
+      entityIds: optional(option("--entity-ids", string({ metavar: "ENTITY_IDS" }))),
+      roleIds: optional(option("--role-ids", string({ metavar: "ROLE_IDS" }))),
+      cursor: optional(option("--cursor", string({ metavar: "CURSOR" }))),
+      limit: optional(option("--limit", integer({ metavar: "LIMIT" }))),
+      sortDir: optional(option("--sort-dir", string({ metavar: "DIR" }))),
+    })),
+    command("remove-assignments", object({
+      cmd: constant("roles-remove-assignments" as const),
+      roleId: option("--role-id", string({ metavar: "ROLE_ID" })),
+      entityIds: option("--entity-ids", string({ metavar: "ENTITY_IDS" })),
+      userIds: option("--user-ids", string({ metavar: "USER_IDS" })),
+    })),
+  ),
+);
+
+// ---------------------------------------------------------------------------
 // SCIM Users commands
 // ---------------------------------------------------------------------------
 
@@ -952,7 +986,7 @@ const rootParser = or(
   or(tokenCommands, teamsCommands, usersCommands),
   or(conversationsCommands, appsCommands),
   or(inviteRequestsCommands, workflowsCommands, functionsCommands),
-  or(scimUsersCommands, scimGroupsCommands, authPolicyCommands, barriersCommands, emojiCommands),
+  or(scimUsersCommands, scimGroupsCommands, authPolicyCommands, barriersCommands, emojiCommands, rolesCommands),
 );
 
 // ---------------------------------------------------------------------------
@@ -1934,6 +1968,60 @@ switch (config.cmd) {
     const client = await createSlackClient(store, profileFlag);
     await executeEmojiRename(client, { name: config.name, newName: config.newName });
     console.log(`Emoji renamed '${config.name}' -> '${config.newName}'.`);
+    break;
+  }
+  case "roles-add-assignments": {
+    const client = await createSlackClient(store, profileFlag);
+    const entityParts = config.entityIds.split(",");
+    const userParts = config.userIds.split(",");
+    const eFirst = entityParts[0];
+    const uFirst = userParts[0];
+    if (eFirst === undefined || eFirst === "") throw new Error("--entity-ids must not be empty");
+    if (uFirst === undefined || uFirst === "") throw new Error("--user-ids must not be empty");
+    await executeRolesAddAssignments(client, {
+      roleId: config.roleId,
+      entityIds: [eFirst, ...entityParts.slice(1)],
+      userIds: [uFirst, ...userParts.slice(1)],
+    });
+    console.log(`Role '${config.roleId}' assigned.`);
+    break;
+  }
+  case "roles-list-assignments": {
+    const client = await createSlackClient(store, profileFlag);
+    const sortDir =
+      config.sortDir === "asc" || config.sortDir === "desc" ? config.sortDir : undefined;
+    if (config.sortDir !== undefined && sortDir === undefined) {
+      throw new Error('--sort-dir must be "asc" or "desc"');
+    }
+    const assignments = await executeRolesListAssignments(client, {
+      entityIds: config.entityIds?.split(","),
+      roleIds: config.roleIds?.split(","),
+      cursor: config.cursor,
+      limit: config.limit,
+      sortDir,
+    });
+    const rows = assignments.map((a) => ({
+      role_id: a.role_id ?? "",
+      entity_id: a.entity_id ?? "",
+      user_id: a.user_id ?? "",
+    }));
+    console.log(formatOutput(rows, ["role_id", "entity_id", "user_id"], outputFormat));
+    break;
+  }
+  case "roles-remove-assignments": {
+    const client = await createSlackClient(store, profileFlag);
+    const entityParts = config.entityIds.split(",");
+    const userParts = config.userIds.split(",");
+    const eFirst = entityParts[0];
+    const uFirst = userParts[0];
+    if (eFirst === undefined || eFirst === "") throw new Error("--entity-ids must not be empty");
+    if (uFirst === undefined || uFirst === "") throw new Error("--user-ids must not be empty");
+    await executeRolesRemoveAssignments(client, {
+      roleId: config.roleId,
+      entityIds: [eFirst, ...entityParts.slice(1)],
+      userIds: [uFirst, ...userParts.slice(1)],
+    });
+    console.log(`Role '${config.roleId}' removed.`);
     break;
   }
   default: {
