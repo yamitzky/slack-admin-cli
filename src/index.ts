@@ -19,6 +19,7 @@ import { executeSetName } from "./commands/teams/settings/set-name";
 import { executeSetIcon } from "./commands/teams/settings/set-icon";
 import { executeSetDescription } from "./commands/teams/settings/set-description";
 import { executeSetDiscoverability } from "./commands/teams/settings/set-discoverability";
+import { executeSetDefaultChannels } from "./commands/teams/settings/set-default-channels";
 import { executeUsersList } from "./commands/users/list";
 import { executeUsersInvite } from "./commands/users/invite";
 import { executeUsersAssign } from "./commands/users/assign";
@@ -263,6 +264,11 @@ const teamsSettingsCommands = command(
       cmd: constant("teams-settings-set-discoverability" as const),
       teamId: option("--team-id", string({ metavar: "TEAM_ID" })),
       discoverability: option("--discoverability", discoverabilityValueParser),
+    })),
+    command("set-default-channels", object({
+      cmd: constant("teams-settings-set-default-channels" as const),
+      teamId: option("--team-id", string({ metavar: "TEAM_ID" })),
+      channelIds: option("--channel-ids", string({ metavar: "CHANNEL_IDS" })),
     })),
   ),
 );
@@ -1130,6 +1136,21 @@ switch (config.cmd) {
     const client = await createSlackClient(store, profileFlag);
     await executeSetDiscoverability(client, { teamId: config.teamId, discoverability: config.discoverability });
     console.log("Team discoverability updated.");
+    break;
+  }
+  case "teams-settings-set-default-channels": {
+    const client = await createSlackClient(store, profileFlag);
+    const defaultChannelParts = config.channelIds.split(",");
+    const defaultChannelFirst = defaultChannelParts[0];
+    if (defaultChannelFirst === undefined || defaultChannelFirst === "") {
+      throw new Error("--channel-ids must not be empty");
+    }
+    const defaultChannelIds: [string, ...string[]] = [defaultChannelFirst, ...defaultChannelParts.slice(1)];
+    await executeSetDefaultChannels(client, {
+      teamId: config.teamId,
+      channelIds: defaultChannelIds,
+    });
+    console.log("Team default channels updated.");
     break;
   }
   case "users-list": {
