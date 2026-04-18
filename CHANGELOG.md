@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.5.0](https://github.com/yamitzky/slack-admin-cli/compare/sladm-cli-v0.4.0...sladm-cli-v0.5.0) (2026-04-18)
+
+
+### Features
+
+* add non-admin management APIs (users, conversations, usergroups, team) ([#13](https://github.com/yamitzky/slack-admin-cli/issues/13)) ([463e841](https://github.com/yamitzky/slack-admin-cli/commit/463e8410be2fb3b1e66964749020a676ca94a9c4))
+
 ## [0.4.0](https://github.com/yamitzky/slack-admin-cli/compare/sladm-cli-v0.3.1...sladm-cli-v0.4.0) (2026-04-17)
 
 
