@@ -1,15 +1,18 @@
 ---
 name: slack-admin-cli-skill
 description: >-
-  Slack Admin CLI (`sladm`) を使って Slack Admin API / SCIM API を操作する。
+  Slack Admin CLI (`sladm`) を使って Slack Admin API / SCIM API / 標準 Slack API を操作する。
   チーム管理・ユーザー管理・チャンネル管理・アプリ管理・ワークフロー管理・招待リクエスト管理・関数管理・SCIMユーザー/グループ管理・
-  認証ポリシー・情報バリア・絵文字・ロール・ユーザーグループ管理など、Slack ワークスペースの管理操作を行いたいときに使う。
+  認証ポリシー・情報バリア・絵文字・ロール・ユーザーグループ管理に加え、非 admin API（users.info, users.profile,
+  conversations.list/info/members, usergroups CRUD, team.info/profile/billableInfo/accessLogs/integrationLogs）も利用可能。
+  Slack ワークスペースの管理・情報取得操作を行いたいときに使う。
 ---
 
 # Slack Admin CLI (sladm)
 
 Slack Enterprise Grid / Business+ ワークスペースの管理 CLI。
-`admin.*` スコープの API を直接叩けるため、Web UI では面倒な一括操作やスクリプト化が可能。
+`admin.*` スコープの API に加え、標準の `users.*` / `conversations.*` / `usergroups.*` / `team.*` API も利用可能。
+Web UI では面倒な一括操作・情報取得・スクリプト化が可能。
 
 ## CLI の使い方を調べる
 
@@ -44,7 +47,8 @@ sladm token list
 sladm token status
 ```
 
-トークンには `admin.*` スコープが必要。環境変数 `SLADM_PROFILE` でデフォルトプロファイルを指定可能。
+admin コマンドには `admin.*` スコープが必要。非 admin コマンド（users.info, conversations.list 等）は標準スコープ（`users:read`, `channels:read`, `usergroups:read`, `team:read` 等）で利用可能。
+環境変数 `SLADM_PROFILE` でデフォルトプロファイルを指定可能。
 
 ## 出力形式
 
@@ -79,7 +83,7 @@ sladm --profile staging users list
 | `barriers` | 情報バリア（Information Barriers）の作成・更新・削除 | — |
 | `emoji` | カスタム絵文字の追加・エイリアス・リネーム・削除 | — |
 | `roles` | システムロール割り当ての追加・一覧・削除 | — |
-| `usergroups` | ユーザーグループのチーム・デフォルトチャンネル管理 | — |
+| `usergroups` | ユーザーグループのチーム・デフォルトチャンネル管理、CRUD（非 admin） | — |
 
 ## 新規グループの使用例
 
@@ -109,6 +113,6 @@ sladm auth-policy assign-entities --policy-name email_password --entity-type use
 
 - **`Token not found`**: `sladm token add` でトークンを登録する
 - **`not_authed` / `invalid_auth`**: トークンが無効。`sladm token status` で確認
-- **`missing_scope`**: トークンに必要な `admin.*` スコープがない
+- **`missing_scope`**: トークンに必要なスコープがない。admin コマンドには `admin.*`、非 admin コマンドには `users:read`, `channels:read`, `usergroups:read`, `team:read` 等が必要
 - **`not_an_admin`**: Enterprise Grid / Business+ の管理者権限が必要
 - **配列パラメータ**: カンマ区切りで指定（例: `--channel-ids C1,C2,C3`）

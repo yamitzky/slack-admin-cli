@@ -14,6 +14,11 @@ import { executeTeamsCreate } from "./commands/teams/create";
 import { executeTeamsList } from "./commands/teams/list";
 import { executeTeamsAdminsList } from "./commands/teams/admins-list";
 import { executeTeamsOwnersList } from "./commands/teams/owners-list";
+import { executeTeamsInfo } from "./commands/teams/info";
+import { executeTeamsBillableInfo } from "./commands/teams/billable-info";
+import { executeTeamsAccessLogs } from "./commands/teams/access-logs";
+import { executeTeamsIntegrationLogs } from "./commands/teams/integration-logs";
+import { executeTeamsProfileGet } from "./commands/teams/profile/get";
 import { executeSettingsInfo } from "./commands/teams/settings/info";
 import { executeSetName } from "./commands/teams/settings/set-name";
 import { executeSetIcon } from "./commands/teams/settings/set-icon";
@@ -36,6 +41,14 @@ import { executeUsersSessionResetBulk } from "./commands/users/session/reset-bul
 import { executeUsersSessionSetSettings } from "./commands/users/session/set-settings";
 import { executeUsersSetExpiration } from "./commands/users/set-expiration";
 import { executeUsersUnsupportedVersionsExport } from "./commands/users/unsupported-versions/export";
+import { executeUsersInfo } from "./commands/users/info";
+import { executeUsersLookupByEmail } from "./commands/users/lookup-by-email";
+import { executeUsersGetPresence } from "./commands/users/get-presence";
+import { executeUsersSetPresence } from "./commands/users/set-presence";
+import { executeUsersConversations } from "./commands/users/conversations";
+import { executeUsersIdentity } from "./commands/users/identity";
+import { executeUsersProfileGet } from "./commands/users/profile/get";
+import { executeUsersProfileSet } from "./commands/users/profile/set";
 
 import { executeConversationsArchive } from "./commands/conversations/archive";
 import { executeConversationsUnarchive } from "./commands/conversations/unarchive";
@@ -58,6 +71,9 @@ import { executeConversationsDisconnectShared } from "./commands/conversations/d
 import { executeConversationsBulkArchive } from "./commands/conversations/bulk-archive";
 import { executeConversationsBulkDelete } from "./commands/conversations/bulk-delete";
 import { executeConversationsBulkMove } from "./commands/conversations/bulk-move";
+import { executeConversationsList } from "./commands/conversations/list";
+import { executeConversationsInfo } from "./commands/conversations/info";
+import { executeConversationsMembers } from "./commands/conversations/members";
 import { executeRestrictAccessAddGroup } from "./commands/conversations/restrict-access/add-group";
 import { executeRestrictAccessListGroups } from "./commands/conversations/restrict-access/list-groups";
 import { executeRestrictAccessRemoveGroup } from "./commands/conversations/restrict-access/remove-group";
@@ -114,6 +130,13 @@ import { executeUsergroupsAddChannels } from "./commands/usergroups/add-channels
 import { executeUsergroupsAddTeams } from "./commands/usergroups/add-teams";
 import { executeUsergroupsListChannels } from "./commands/usergroups/list-channels";
 import { executeUsergroupsRemoveChannels } from "./commands/usergroups/remove-channels";
+import { executeUsergroupsList } from "./commands/usergroups/list";
+import { executeUsergroupsCreate } from "./commands/usergroups/create";
+import { executeUsergroupsUpdate } from "./commands/usergroups/update";
+import { executeUsergroupsEnable } from "./commands/usergroups/enable";
+import { executeUsergroupsDisable } from "./commands/usergroups/disable";
+import { executeUsergroupsUsersList } from "./commands/usergroups/users/list";
+import { executeUsergroupsUsersUpdate } from "./commands/usergroups/users/update";
 
 import { executeScimUsersList } from "./commands/scim-users/list";
 import { executeScimUsersGet } from "./commands/scim-users/get";
@@ -166,6 +189,18 @@ const discoverabilityValueParser: ValueParser<"sync", TeamDiscoverability> = {
     };
   },
   format(value: TeamDiscoverability): string {
+    return value;
+  },
+};
+
+const presenceValueParser: ValueParser<"sync", "auto" | "away"> = {
+  $mode: "sync",
+  metavar: "PRESENCE",
+  parse(input: string): ValueParserResult<"auto" | "away"> {
+    if (input === "auto" || input === "away") return { success: true, value: input };
+    return { success: false, error: [{ type: "text", text: "Must be 'auto' or 'away'." }] };
+  },
+  format(value: "auto" | "away"): string {
     return value;
   },
 };
@@ -304,6 +339,39 @@ const teamsCommands = command(
       cmd: constant("teams-owners-list" as const),
       teamId: option("--team-id", string({ metavar: "TEAM_ID" })),
     }))),
+    command("info", object({
+      cmd: constant("teams-info" as const),
+      team: optional(option("--team", string({ metavar: "TEAM_ID" }))),
+      domain: optional(option("--domain", string({ metavar: "DOMAIN" }))),
+    })),
+    command("billable-info", object({
+      cmd: constant("teams-billable-info" as const),
+      user: optional(option("--user", string({ metavar: "USER_ID" }))),
+      teamId: optional(option("--team-id", string({ metavar: "TEAM_ID" }))),
+      cursor: optional(option("--cursor", string({ metavar: "CURSOR" }))),
+      limit: optional(option("--limit", integer({ metavar: "LIMIT" }))),
+    })),
+    command("access-logs", object({
+      cmd: constant("teams-access-logs" as const),
+      before: optional(option("--before", integer({ metavar: "TIMESTAMP" }))),
+      count: optional(option("--count", integer({ metavar: "COUNT" }))),
+      page: optional(option("--page", integer({ metavar: "PAGE" }))),
+      teamId: optional(option("--team-id", string({ metavar: "TEAM_ID" }))),
+    })),
+    command("integration-logs", object({
+      cmd: constant("teams-integration-logs" as const),
+      appId: optional(option("--app-id", string({ metavar: "APP_ID" }))),
+      changeType: optional(option("--change-type", string({ metavar: "TYPE" }))),
+      count: optional(option("--count", integer({ metavar: "COUNT" }))),
+      page: optional(option("--page", integer({ metavar: "PAGE" }))),
+      serviceId: optional(option("--service-id", string({ metavar: "SERVICE_ID" }))),
+      teamId: optional(option("--team-id", string({ metavar: "TEAM_ID" }))),
+      user: optional(option("--user", string({ metavar: "USER_ID" }))),
+    })),
+    command("profile", command("get", object({
+      cmd: constant("teams-profile-get" as const),
+      visibility: optional(option("--visibility", string({ metavar: "VISIBILITY" }))),
+    }))),
     teamsSettingsCommands,
   ),
 );
@@ -315,6 +383,7 @@ const teamsCommands = command(
 const usersCommands = command(
   "users",
   or(
+    or(
     command("list", object({
       cmd: constant("users-list" as const),
       teamId: optional(option("--team-id", string({ metavar: "TEAM_ID" }))),
@@ -360,6 +429,7 @@ const usersCommands = command(
       teamId: option("--team-id", string({ metavar: "TEAM_ID" })),
       userId: option("--user-id", string({ metavar: "USER_ID" })),
     })),
+    ),
     command("session", or(
       command("reset", object({
         cmd: constant("users-session-reset" as const),
@@ -411,6 +481,50 @@ const usersCommands = command(
       dateEndOfSupport: optional(option("--date-end-of-support", integer({ metavar: "TIMESTAMP" }))),
       dateSessionsStarted: optional(option("--date-sessions-started", integer({ metavar: "TIMESTAMP" }))),
     }))),
+    or(
+      command("info", object({
+        cmd: constant("users-info" as const),
+        user: option("--user", string({ metavar: "USER_ID" })),
+        includeLocale: optional(option("--include-locale", boolValueParser)),
+      })),
+      command("lookup-by-email", object({
+        cmd: constant("users-lookup-by-email" as const),
+        email: option("--email", string({ metavar: "EMAIL" })),
+      })),
+      command("get-presence", object({
+        cmd: constant("users-get-presence" as const),
+        user: option("--user", string({ metavar: "USER_ID" })),
+      })),
+      command("set-presence", object({
+        cmd: constant("users-set-presence" as const),
+        presence: option("--presence", presenceValueParser),
+      })),
+      command("conversations", object({
+        cmd: constant("users-conversations" as const),
+        user: optional(option("--user", string({ metavar: "USER_ID" }))),
+        cursor: optional(option("--cursor", string({ metavar: "CURSOR" }))),
+        limit: optional(option("--limit", integer({ metavar: "LIMIT" }))),
+        types: optional(option("--types", string({ metavar: "TYPES" }))),
+        excludeArchived: optional(option("--exclude-archived", boolValueParser)),
+      })),
+      command("identity", object({
+        cmd: constant("users-identity" as const),
+      })),
+      command("profile", or(
+        command("get", object({
+          cmd: constant("users-profile-get" as const),
+          user: optional(option("--user", string({ metavar: "USER_ID" }))),
+          includeLabels: optional(option("--include-labels", boolValueParser)),
+        })),
+        command("set", object({
+          cmd: constant("users-profile-set" as const),
+          user: optional(option("--user", string({ metavar: "USER_ID" }))),
+          name: optional(option("--name", string({ metavar: "NAME" }))),
+          value: optional(option("--value", string({ metavar: "VALUE" }))),
+          profile: optional(option("--profile", string({ metavar: "JSON" }))),
+        })),
+      )),
+    ),
   ),
 );
 
@@ -575,6 +689,26 @@ const conversationsCommands = command(
       })),
       conversationsRestrictAccessCommands,
       conversationsEkmCommands,
+      command("list", object({
+        cmd: constant("conversations-list" as const),
+        cursor: optional(option("--cursor", string({ metavar: "CURSOR" }))),
+        limit: optional(option("--limit", integer({ metavar: "LIMIT" }))),
+        types: optional(option("--types", string({ metavar: "TYPES" }))),
+        excludeArchived: optional(option("--exclude-archived", boolValueParser)),
+        teamId: optional(option("--team-id", string({ metavar: "TEAM_ID" }))),
+      })),
+      command("info", object({
+        cmd: constant("conversations-info" as const),
+        channel: option("--channel", string({ metavar: "CHANNEL_ID" })),
+        includeLocale: optional(option("--include-locale", boolValueParser)),
+        includeNumMembers: optional(option("--include-num-members", boolValueParser)),
+      })),
+      command("members", object({
+        cmd: constant("conversations-members" as const),
+        channel: option("--channel", string({ metavar: "CHANNEL_ID" })),
+        cursor: optional(option("--cursor", string({ metavar: "CURSOR" }))),
+        limit: optional(option("--limit", integer({ metavar: "LIMIT" }))),
+      })),
     ),
   ),
 );
@@ -993,6 +1127,59 @@ const usergroupsCommands = command(
       usergroupId: option("--usergroup-id", string({ metavar: "USERGROUP_ID" })),
       channelIds: option("--channel-ids", string({ metavar: "CHANNEL_IDS" })),
     })),
+    command("list", object({
+      cmd: constant("usergroups-list" as const),
+      includeCount: optional(option("--include-count", boolValueParser)),
+      includeDisabled: optional(option("--include-disabled", boolValueParser)),
+      includeUsers: optional(option("--include-users", boolValueParser)),
+      teamId: optional(option("--team-id", string({ metavar: "TEAM_ID" }))),
+    })),
+    command("create", object({
+      cmd: constant("usergroups-create" as const),
+      name: option("--name", string({ metavar: "NAME" })),
+      handle: optional(option("--handle", string({ metavar: "HANDLE" }))),
+      description: optional(option("--description", string({ metavar: "DESC" }))),
+      channels: optional(option("--channels", string({ metavar: "CHANNEL_IDS" }))),
+      includeCount: optional(option("--include-count", boolValueParser)),
+      teamId: optional(option("--team-id", string({ metavar: "TEAM_ID" }))),
+    })),
+    command("update", object({
+      cmd: constant("usergroups-update" as const),
+      usergroup: option("--usergroup", string({ metavar: "USERGROUP_ID" })),
+      name: optional(option("--name", string({ metavar: "NAME" }))),
+      handle: optional(option("--handle", string({ metavar: "HANDLE" }))),
+      description: optional(option("--description", string({ metavar: "DESC" }))),
+      channels: optional(option("--channels", string({ metavar: "CHANNEL_IDS" }))),
+      includeCount: optional(option("--include-count", boolValueParser)),
+      teamId: optional(option("--team-id", string({ metavar: "TEAM_ID" }))),
+    })),
+    command("enable", object({
+      cmd: constant("usergroups-enable" as const),
+      usergroup: option("--usergroup", string({ metavar: "USERGROUP_ID" })),
+      includeCount: optional(option("--include-count", boolValueParser)),
+      teamId: optional(option("--team-id", string({ metavar: "TEAM_ID" }))),
+    })),
+    command("disable", object({
+      cmd: constant("usergroups-disable" as const),
+      usergroup: option("--usergroup", string({ metavar: "USERGROUP_ID" })),
+      includeCount: optional(option("--include-count", boolValueParser)),
+      teamId: optional(option("--team-id", string({ metavar: "TEAM_ID" }))),
+    })),
+    command("users", or(
+      command("list", object({
+        cmd: constant("usergroups-users-list" as const),
+        usergroup: option("--usergroup", string({ metavar: "USERGROUP_ID" })),
+        includeDisabled: optional(option("--include-disabled", boolValueParser)),
+        teamId: optional(option("--team-id", string({ metavar: "TEAM_ID" }))),
+      })),
+      command("update", object({
+        cmd: constant("usergroups-users-update" as const),
+        usergroup: option("--usergroup", string({ metavar: "USERGROUP_ID" })),
+        users: option("--users", string({ metavar: "USER_IDS" })),
+        includeCount: optional(option("--include-count", boolValueParser)),
+        teamId: optional(option("--team-id", string({ metavar: "TEAM_ID" }))),
+      })),
+    )),
   ),
 );
 
@@ -1159,6 +1346,47 @@ switch (config.cmd) {
     const ownerIds = await executeTeamsOwnersList(client, { teamId: config.teamId });
     const rows = ownerIds.map((id: string) => ({ id }));
     console.log(formatOutput(rows, ["id"], outputFormat));
+    break;
+  }
+  case "teams-info": {
+    const client = await createSlackClient(store, profileFlag);
+    const team = await executeTeamsInfo(client, { team: config.team, domain: config.domain });
+    console.log(JSON.stringify(team, null, 2));
+    break;
+  }
+  case "teams-profile-get": {
+    const client = await createSlackClient(store, profileFlag);
+    const profile = await executeTeamsProfileGet(client, { visibility: config.visibility });
+    console.log(JSON.stringify(profile, null, 2));
+    break;
+  }
+  case "teams-billable-info": {
+    const client = await createSlackClient(store, profileFlag);
+    const info = await executeTeamsBillableInfo(client, {
+      user: config.user, teamId: config.teamId, cursor: config.cursor, limit: config.limit,
+    });
+    console.log(JSON.stringify(info, null, 2));
+    break;
+  }
+  case "teams-access-logs": {
+    const client = await createSlackClient(store, profileFlag);
+    const logs = await executeTeamsAccessLogs(client, {
+      before: config.before, count: config.count, page: config.page, teamId: config.teamId,
+    });
+    const rows = logs.map((l: { user_id?: string; username?: string; ip?: string; date_first?: number; date_last?: number; count?: number }) => ({
+      user_id: l.user_id ?? "", username: l.username ?? "", ip: l.ip ?? "",
+      date_first: l.date_first ?? 0, date_last: l.date_last ?? 0, count: l.count ?? 0,
+    }));
+    console.log(formatOutput(rows, ["user_id", "username", "ip", "date_first", "date_last", "count"], outputFormat));
+    break;
+  }
+  case "teams-integration-logs": {
+    const client = await createSlackClient(store, profileFlag);
+    const logs = await executeTeamsIntegrationLogs(client, {
+      appId: config.appId, changeType: config.changeType, count: config.count,
+      page: config.page, serviceId: config.serviceId, teamId: config.teamId, user: config.user,
+    });
+    console.log(JSON.stringify(logs, null, 2));
     break;
   }
   case "teams-settings-info": {
@@ -1377,6 +1605,79 @@ switch (config.cmd) {
     console.log("Unsupported versions export requested.");
     break;
   }
+  case "users-info": {
+    const client = await createSlackClient(store, profileFlag);
+    const user = await executeUsersInfo(client, { user: config.user, includeLocale: config.includeLocale });
+    console.log(JSON.stringify(user, null, 2));
+    break;
+  }
+  case "users-lookup-by-email": {
+    const client = await createSlackClient(store, profileFlag);
+    const user = await executeUsersLookupByEmail(client, { email: config.email });
+    console.log(JSON.stringify(user, null, 2));
+    break;
+  }
+  case "users-get-presence": {
+    const client = await createSlackClient(store, profileFlag);
+    const presence = await executeUsersGetPresence(client, { user: config.user });
+    console.log(JSON.stringify(presence, null, 2));
+    break;
+  }
+  case "users-set-presence": {
+    const client = await createSlackClient(store, profileFlag);
+    await executeUsersSetPresence(client, { presence: config.presence });
+    console.log(`Presence set to '${config.presence}'.`);
+    break;
+  }
+  case "users-conversations": {
+    const client = await createSlackClient(store, profileFlag);
+    const channels = await executeUsersConversations(client, {
+      user: config.user,
+      cursor: config.cursor,
+      limit: config.limit,
+      types: config.types,
+      excludeArchived: config.excludeArchived,
+    });
+    const rows = channels.map((c: { id?: string; name?: string; is_private?: boolean }) => ({
+      id: c.id ?? "", name: c.name ?? "", is_private: c.is_private ?? false,
+    }));
+    console.log(formatOutput(rows, ["id", "name", "is_private"], outputFormat));
+    break;
+  }
+  case "users-identity": {
+    const client = await createSlackClient(store, profileFlag);
+    const identity = await executeUsersIdentity(client, {});
+    console.log(JSON.stringify(identity, null, 2));
+    break;
+  }
+  case "users-profile-get": {
+    const client = await createSlackClient(store, profileFlag);
+    const profile = await executeUsersProfileGet(client, {
+      user: config.user,
+      includeLabels: config.includeLabels,
+    });
+    console.log(JSON.stringify(profile, null, 2));
+    break;
+  }
+  case "users-profile-set": {
+    const client = await createSlackClient(store, profileFlag);
+    let profileJson: Record<string, unknown> | undefined;
+    if (config.profile !== undefined) {
+      const parsed: unknown = JSON.parse(config.profile);
+      if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) {
+        throw new Error("--profile must be a JSON object");
+      }
+      profileJson = { ...parsed };
+    }
+    await executeUsersProfileSet(client, {
+      user: config.user,
+      name: config.name,
+      value: config.value,
+      profile: profileJson,
+    });
+    console.log("Profile updated.");
+    break;
+  }
   case "conversations-archive": {
     const client = await createSlackClient(store, profileFlag);
     await executeConversationsArchive(client, { channelId: config.channelId });
@@ -1577,6 +1878,36 @@ switch (config.cmd) {
     const client = await createSlackClient(store, profileFlag);
     await executeConversationsRemoveCustomRetention(client, { channelId: config.channelId });
     console.log("Custom retention policy removed.");
+    break;
+  }
+  case "conversations-list": {
+    const client = await createSlackClient(store, profileFlag);
+    const channels = await executeConversationsList(client, {
+      cursor: config.cursor, limit: config.limit, types: config.types,
+      excludeArchived: config.excludeArchived, teamId: config.teamId,
+    });
+    const rows = channels.map((c: { id?: string; name?: string; is_private?: boolean; is_archived?: boolean }) => ({
+      id: c.id ?? "", name: c.name ?? "", is_private: c.is_private ?? false, is_archived: c.is_archived ?? false,
+    }));
+    console.log(formatOutput(rows, ["id", "name", "is_private", "is_archived"], outputFormat));
+    break;
+  }
+  case "conversations-info": {
+    const client = await createSlackClient(store, profileFlag);
+    const channel = await executeConversationsInfo(client, {
+      channel: config.channel,
+      includeLocale: config.includeLocale,
+      includeNumMembers: config.includeNumMembers,
+    });
+    console.log(JSON.stringify(channel, null, 2));
+    break;
+  }
+  case "conversations-members": {
+    const client = await createSlackClient(store, profileFlag);
+    const members = await executeConversationsMembers(client, {
+      channel: config.channel, cursor: config.cursor, limit: config.limit,
+    });
+    console.log(JSON.stringify(members, null, 2));
     break;
   }
   case "conversations-restrict-access-add-group": {
@@ -2278,6 +2609,71 @@ switch (config.cmd) {
       channelIds,
     });
     console.log(`Channels removed from usergroup '${config.usergroupId}'.`);
+    break;
+  }
+  case "usergroups-list": {
+    const client = await createSlackClient(store, profileFlag);
+    const groups = await executeUsergroupsList(client, {
+      includeCount: config.includeCount, includeDisabled: config.includeDisabled,
+      includeUsers: config.includeUsers, teamId: config.teamId,
+    });
+    const rows = groups.map((g: { id?: string; name?: string; handle?: string; date_delete?: number }) => ({
+      id: g.id ?? "", name: g.name ?? "", handle: g.handle ?? "",
+      enabled: (g.date_delete ?? 0) === 0,
+    }));
+    console.log(formatOutput(rows, ["id", "name", "handle", "enabled"], outputFormat));
+    break;
+  }
+  case "usergroups-create": {
+    const client = await createSlackClient(store, profileFlag);
+    const group = await executeUsergroupsCreate(client, {
+      name: config.name, handle: config.handle, description: config.description,
+      channels: config.channels, includeCount: config.includeCount, teamId: config.teamId,
+    });
+    console.log(JSON.stringify(group, null, 2));
+    break;
+  }
+  case "usergroups-update": {
+    const client = await createSlackClient(store, profileFlag);
+    await executeUsergroupsUpdate(client, {
+      usergroup: config.usergroup, name: config.name, handle: config.handle,
+      description: config.description, channels: config.channels,
+      includeCount: config.includeCount, teamId: config.teamId,
+    });
+    console.log(`Usergroup '${config.usergroup}' updated.`);
+    break;
+  }
+  case "usergroups-enable": {
+    const client = await createSlackClient(store, profileFlag);
+    await executeUsergroupsEnable(client, {
+      usergroup: config.usergroup, includeCount: config.includeCount, teamId: config.teamId,
+    });
+    console.log(`Usergroup '${config.usergroup}' enabled.`);
+    break;
+  }
+  case "usergroups-disable": {
+    const client = await createSlackClient(store, profileFlag);
+    await executeUsergroupsDisable(client, {
+      usergroup: config.usergroup, includeCount: config.includeCount, teamId: config.teamId,
+    });
+    console.log(`Usergroup '${config.usergroup}' disabled.`);
+    break;
+  }
+  case "usergroups-users-list": {
+    const client = await createSlackClient(store, profileFlag);
+    const users = await executeUsergroupsUsersList(client, {
+      usergroup: config.usergroup, includeDisabled: config.includeDisabled, teamId: config.teamId,
+    });
+    console.log(JSON.stringify(users, null, 2));
+    break;
+  }
+  case "usergroups-users-update": {
+    const client = await createSlackClient(store, profileFlag);
+    await executeUsergroupsUsersUpdate(client, {
+      usergroup: config.usergroup, users: config.users,
+      includeCount: config.includeCount, teamId: config.teamId,
+    });
+    console.log(`Usergroup '${config.usergroup}' users updated.`);
     break;
   }
   default: {
