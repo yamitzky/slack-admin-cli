@@ -14,6 +14,11 @@ import { executeTeamsCreate } from "./commands/teams/create";
 import { executeTeamsList } from "./commands/teams/list";
 import { executeTeamsAdminsList } from "./commands/teams/admins-list";
 import { executeTeamsOwnersList } from "./commands/teams/owners-list";
+import { executeTeamsInfo } from "./commands/teams/info";
+import { executeTeamsBillableInfo } from "./commands/teams/billable-info";
+import { executeTeamsAccessLogs } from "./commands/teams/access-logs";
+import { executeTeamsIntegrationLogs } from "./commands/teams/integration-logs";
+import { executeTeamsProfileGet } from "./commands/teams/profile/get";
 import { executeSettingsInfo } from "./commands/teams/settings/info";
 import { executeSetName } from "./commands/teams/settings/set-name";
 import { executeSetIcon } from "./commands/teams/settings/set-icon";
@@ -333,6 +338,39 @@ const teamsCommands = command(
     command("owners", command("list", object({
       cmd: constant("teams-owners-list" as const),
       teamId: option("--team-id", string({ metavar: "TEAM_ID" })),
+    }))),
+    command("info", object({
+      cmd: constant("teams-info" as const),
+      team: optional(option("--team", string({ metavar: "TEAM_ID" }))),
+      domain: optional(option("--domain", string({ metavar: "DOMAIN" }))),
+    })),
+    command("billable-info", object({
+      cmd: constant("teams-billable-info" as const),
+      user: optional(option("--user", string({ metavar: "USER_ID" }))),
+      teamId: optional(option("--team-id", string({ metavar: "TEAM_ID" }))),
+      cursor: optional(option("--cursor", string({ metavar: "CURSOR" }))),
+      limit: optional(option("--limit", integer({ metavar: "LIMIT" }))),
+    })),
+    command("access-logs", object({
+      cmd: constant("teams-access-logs" as const),
+      before: optional(option("--before", integer({ metavar: "TIMESTAMP" }))),
+      count: optional(option("--count", integer({ metavar: "COUNT" }))),
+      page: optional(option("--page", integer({ metavar: "PAGE" }))),
+      teamId: optional(option("--team-id", string({ metavar: "TEAM_ID" }))),
+    })),
+    command("integration-logs", object({
+      cmd: constant("teams-integration-logs" as const),
+      appId: optional(option("--app-id", string({ metavar: "APP_ID" }))),
+      changeType: optional(option("--change-type", string({ metavar: "TYPE" }))),
+      count: optional(option("--count", integer({ metavar: "COUNT" }))),
+      page: optional(option("--page", integer({ metavar: "PAGE" }))),
+      serviceId: optional(option("--service-id", string({ metavar: "SERVICE_ID" }))),
+      teamId: optional(option("--team-id", string({ metavar: "TEAM_ID" }))),
+      user: optional(option("--user", string({ metavar: "USER_ID" }))),
+    })),
+    command("profile", command("get", object({
+      cmd: constant("teams-profile-get" as const),
+      visibility: optional(option("--visibility", string({ metavar: "VISIBILITY" }))),
     }))),
     teamsSettingsCommands,
   ),
@@ -1308,6 +1346,47 @@ switch (config.cmd) {
     const ownerIds = await executeTeamsOwnersList(client, { teamId: config.teamId });
     const rows = ownerIds.map((id: string) => ({ id }));
     console.log(formatOutput(rows, ["id"], outputFormat));
+    break;
+  }
+  case "teams-info": {
+    const client = await createSlackClient(store, profileFlag);
+    const team = await executeTeamsInfo(client, { team: config.team, domain: config.domain });
+    console.log(JSON.stringify(team, null, 2));
+    break;
+  }
+  case "teams-profile-get": {
+    const client = await createSlackClient(store, profileFlag);
+    const profile = await executeTeamsProfileGet(client, { visibility: config.visibility });
+    console.log(JSON.stringify(profile, null, 2));
+    break;
+  }
+  case "teams-billable-info": {
+    const client = await createSlackClient(store, profileFlag);
+    const info = await executeTeamsBillableInfo(client, {
+      user: config.user, teamId: config.teamId, cursor: config.cursor, limit: config.limit,
+    });
+    console.log(JSON.stringify(info, null, 2));
+    break;
+  }
+  case "teams-access-logs": {
+    const client = await createSlackClient(store, profileFlag);
+    const logs = await executeTeamsAccessLogs(client, {
+      before: config.before, count: config.count, page: config.page, teamId: config.teamId,
+    });
+    const rows = logs.map((l: { user_id?: string; username?: string; ip?: string; date_first?: number; date_last?: number; count?: number }) => ({
+      user_id: l.user_id ?? "", username: l.username ?? "", ip: l.ip ?? "",
+      date_first: l.date_first ?? 0, date_last: l.date_last ?? 0, count: l.count ?? 0,
+    }));
+    console.log(formatOutput(rows, ["user_id", "username", "ip", "date_first", "date_last", "count"], outputFormat));
+    break;
+  }
+  case "teams-integration-logs": {
+    const client = await createSlackClient(store, profileFlag);
+    const logs = await executeTeamsIntegrationLogs(client, {
+      appId: config.appId, changeType: config.changeType, count: config.count,
+      page: config.page, serviceId: config.serviceId, teamId: config.teamId, user: config.user,
+    });
+    console.log(JSON.stringify(logs, null, 2));
     break;
   }
   case "teams-settings-info": {
