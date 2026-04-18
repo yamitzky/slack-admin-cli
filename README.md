@@ -6,7 +6,7 @@ CLI & Agent Skill for managing Slack Enterprise Grid / Business+ workspaces via 
 
 ## Features
 
-- **107 admin commands** covering 15 API groups: teams, users, conversations, apps, invite-requests, workflows, functions, scim-users, scim-groups, auth-policy, barriers, emoji, roles, usergroups, and token management
+- **130 commands** covering admin.\* and standard Slack APIs: teams, users, conversations, apps, invite-requests, workflows, functions, scim-users, scim-groups, auth-policy, barriers, emoji, roles, usergroups, and token management
 - **Agent Skill** — ships with a Claude Code / Codex skill so AI agents can drive Slack admin tasks using the CLI as a tool
 - **Bulk operations** — archive, delete, or move hundreds of channels at once with `conversations bulk-*`
 - **Output formats** — table (human), JSON (programmatic), TSV (pipe-friendly)
@@ -322,6 +322,44 @@ sladm teams list --plain         # TSV (for scripting)
 | `usergroups add-teams` | Add teams to a usergroup |
 | `usergroups list-channels` | List default channels of a usergroup |
 | `usergroups remove-channels` | Remove default channels from a usergroup |
+| `usergroups list` | List usergroups |
+| `usergroups create` | Create a usergroup |
+| `usergroups update` | Update a usergroup |
+| `usergroups enable` | Enable a usergroup |
+| `usergroups disable` | Disable a usergroup |
+| `usergroups users list` | List members of a usergroup |
+| `usergroups users update` | Update members of a usergroup |
+
+### Users (non-admin)
+
+| Command | Description |
+|---------|-------------|
+| `users info` | Get user info (`users.info`) |
+| `users lookup-by-email` | Look up user by email (`users.lookupByEmail`) |
+| `users get-presence` | Get user presence (`users.getPresence`) |
+| `users set-presence` | Set user presence (`users.setPresence`) |
+| `users conversations` | List user's conversations (`users.conversations`) |
+| `users identity` | Get caller's identity (`users.identity`) |
+| `users profile get` | Get user profile (`users.profile.get`) |
+| `users profile set` | Set user profile fields (`users.profile.set`) |
+
+### Conversations (non-admin)
+
+| Command | Description |
+|---------|-------------|
+| `conversations list` | List channels (`conversations.list`) |
+| `conversations info` | Get channel info (`conversations.info`) |
+| `conversations members` | List channel members (`conversations.members`) |
+
+### Teams (non-admin)
+
+| Command | Description |
+|---------|-------------|
+| `teams info` | Get team info (`team.info`) |
+| `teams profile get` | Get team profile (`team.profile.get`) |
+| `teams billable-info` | Get billable info per user (`team.billableInfo`) |
+| `teams access-logs` | Get access logs (`team.accessLogs`) |
+| `teams integration-logs` | Get integration logs (`team.integrationLogs`) |
 
 ## Required Scopes
 
@@ -340,6 +378,23 @@ sladm teams list --plain         # TSV (for scripting)
 | `admin.workflows:read` | List workflows and functions |
 | `admin.workflows:write` | Manage workflows, set permissions |
 | `admin` | SCIM user and group management |
+
+### Non-admin API Scopes
+
+| Scope | Purpose |
+|-------|---------|
+| `users:read` | User info, presence, conversations |
+| `users:read.email` | Look up user by email |
+| `users.profile:read` | Read user profile |
+| `users.profile:write` | Update user profile |
+| `channels:read` | List public channels, get channel info/members |
+| `groups:read` | Private channel info/members |
+| `mpim:read` | Multi-party DM info/members |
+| `im:read` | DM info/members |
+| `usergroups:read` | List and read usergroups |
+| `usergroups:write` | Create, update, enable, disable usergroups |
+| `team:read` | Team info and profile |
+| `admin` (user token) | `team.accessLogs` and `team.billableInfo` require admin privilege |
 
 ## Development
 
