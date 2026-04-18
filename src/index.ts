@@ -125,6 +125,13 @@ import { executeUsergroupsAddChannels } from "./commands/usergroups/add-channels
 import { executeUsergroupsAddTeams } from "./commands/usergroups/add-teams";
 import { executeUsergroupsListChannels } from "./commands/usergroups/list-channels";
 import { executeUsergroupsRemoveChannels } from "./commands/usergroups/remove-channels";
+import { executeUsergroupsList } from "./commands/usergroups/list";
+import { executeUsergroupsCreate } from "./commands/usergroups/create";
+import { executeUsergroupsUpdate } from "./commands/usergroups/update";
+import { executeUsergroupsEnable } from "./commands/usergroups/enable";
+import { executeUsergroupsDisable } from "./commands/usergroups/disable";
+import { executeUsergroupsUsersList } from "./commands/usergroups/users/list";
+import { executeUsergroupsUsersUpdate } from "./commands/usergroups/users/update";
 
 import { executeScimUsersList } from "./commands/scim-users/list";
 import { executeScimUsersGet } from "./commands/scim-users/get";
@@ -1082,6 +1089,59 @@ const usergroupsCommands = command(
       usergroupId: option("--usergroup-id", string({ metavar: "USERGROUP_ID" })),
       channelIds: option("--channel-ids", string({ metavar: "CHANNEL_IDS" })),
     })),
+    command("list", object({
+      cmd: constant("usergroups-list" as const),
+      includeCount: optional(option("--include-count", boolValueParser)),
+      includeDisabled: optional(option("--include-disabled", boolValueParser)),
+      includeUsers: optional(option("--include-users", boolValueParser)),
+      teamId: optional(option("--team-id", string({ metavar: "TEAM_ID" }))),
+    })),
+    command("create", object({
+      cmd: constant("usergroups-create" as const),
+      name: option("--name", string({ metavar: "NAME" })),
+      handle: optional(option("--handle", string({ metavar: "HANDLE" }))),
+      description: optional(option("--description", string({ metavar: "DESC" }))),
+      channels: optional(option("--channels", string({ metavar: "CHANNEL_IDS" }))),
+      includeCount: optional(option("--include-count", boolValueParser)),
+      teamId: optional(option("--team-id", string({ metavar: "TEAM_ID" }))),
+    })),
+    command("update", object({
+      cmd: constant("usergroups-update" as const),
+      usergroup: option("--usergroup", string({ metavar: "USERGROUP_ID" })),
+      name: optional(option("--name", string({ metavar: "NAME" }))),
+      handle: optional(option("--handle", string({ metavar: "HANDLE" }))),
+      description: optional(option("--description", string({ metavar: "DESC" }))),
+      channels: optional(option("--channels", string({ metavar: "CHANNEL_IDS" }))),
+      includeCount: optional(option("--include-count", boolValueParser)),
+      teamId: optional(option("--team-id", string({ metavar: "TEAM_ID" }))),
+    })),
+    command("enable", object({
+      cmd: constant("usergroups-enable" as const),
+      usergroup: option("--usergroup", string({ metavar: "USERGROUP_ID" })),
+      includeCount: optional(option("--include-count", boolValueParser)),
+      teamId: optional(option("--team-id", string({ metavar: "TEAM_ID" }))),
+    })),
+    command("disable", object({
+      cmd: constant("usergroups-disable" as const),
+      usergroup: option("--usergroup", string({ metavar: "USERGROUP_ID" })),
+      includeCount: optional(option("--include-count", boolValueParser)),
+      teamId: optional(option("--team-id", string({ metavar: "TEAM_ID" }))),
+    })),
+    command("users", or(
+      command("list", object({
+        cmd: constant("usergroups-users-list" as const),
+        usergroup: option("--usergroup", string({ metavar: "USERGROUP_ID" })),
+        includeDisabled: optional(option("--include-disabled", boolValueParser)),
+        teamId: optional(option("--team-id", string({ metavar: "TEAM_ID" }))),
+      })),
+      command("update", object({
+        cmd: constant("usergroups-users-update" as const),
+        usergroup: option("--usergroup", string({ metavar: "USERGROUP_ID" })),
+        users: option("--users", string({ metavar: "USER_IDS" })),
+        includeCount: optional(option("--include-count", boolValueParser)),
+        teamId: optional(option("--team-id", string({ metavar: "TEAM_ID" }))),
+      })),
+    )),
   ),
 );
 
@@ -2470,6 +2530,71 @@ switch (config.cmd) {
       channelIds,
     });
     console.log(`Channels removed from usergroup '${config.usergroupId}'.`);
+    break;
+  }
+  case "usergroups-list": {
+    const client = await createSlackClient(store, profileFlag);
+    const groups = await executeUsergroupsList(client, {
+      includeCount: config.includeCount, includeDisabled: config.includeDisabled,
+      includeUsers: config.includeUsers, teamId: config.teamId,
+    });
+    const rows = groups.map((g: { id?: string; name?: string; handle?: string; date_delete?: number }) => ({
+      id: g.id ?? "", name: g.name ?? "", handle: g.handle ?? "",
+      enabled: (g.date_delete ?? 0) === 0,
+    }));
+    console.log(formatOutput(rows, ["id", "name", "handle", "enabled"], outputFormat));
+    break;
+  }
+  case "usergroups-create": {
+    const client = await createSlackClient(store, profileFlag);
+    const group = await executeUsergroupsCreate(client, {
+      name: config.name, handle: config.handle, description: config.description,
+      channels: config.channels, includeCount: config.includeCount, teamId: config.teamId,
+    });
+    console.log(JSON.stringify(group, null, 2));
+    break;
+  }
+  case "usergroups-update": {
+    const client = await createSlackClient(store, profileFlag);
+    await executeUsergroupsUpdate(client, {
+      usergroup: config.usergroup, name: config.name, handle: config.handle,
+      description: config.description, channels: config.channels,
+      includeCount: config.includeCount, teamId: config.teamId,
+    });
+    console.log(`Usergroup '${config.usergroup}' updated.`);
+    break;
+  }
+  case "usergroups-enable": {
+    const client = await createSlackClient(store, profileFlag);
+    await executeUsergroupsEnable(client, {
+      usergroup: config.usergroup, includeCount: config.includeCount, teamId: config.teamId,
+    });
+    console.log(`Usergroup '${config.usergroup}' enabled.`);
+    break;
+  }
+  case "usergroups-disable": {
+    const client = await createSlackClient(store, profileFlag);
+    await executeUsergroupsDisable(client, {
+      usergroup: config.usergroup, includeCount: config.includeCount, teamId: config.teamId,
+    });
+    console.log(`Usergroup '${config.usergroup}' disabled.`);
+    break;
+  }
+  case "usergroups-users-list": {
+    const client = await createSlackClient(store, profileFlag);
+    const users = await executeUsergroupsUsersList(client, {
+      usergroup: config.usergroup, includeDisabled: config.includeDisabled, teamId: config.teamId,
+    });
+    console.log(JSON.stringify(users, null, 2));
+    break;
+  }
+  case "usergroups-users-update": {
+    const client = await createSlackClient(store, profileFlag);
+    await executeUsergroupsUsersUpdate(client, {
+      usergroup: config.usergroup, users: config.users,
+      includeCount: config.includeCount, teamId: config.teamId,
+    });
+    console.log(`Usergroup '${config.usergroup}' users updated.`);
     break;
   }
   default: {
