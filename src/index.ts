@@ -1501,7 +1501,11 @@ switch (config.cmd) {
     const client = await createSlackClient(store, profileFlag);
     let profileJson: Record<string, unknown> | undefined;
     if (config.profile !== undefined) {
-      profileJson = JSON.parse(config.profile) as Record<string, unknown>;
+      const parsed: unknown = JSON.parse(config.profile);
+      if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) {
+        throw new Error("--profile must be a JSON object");
+      }
+      profileJson = { ...parsed };
     }
     await executeUsersProfileSet(client, {
       user: config.user,
