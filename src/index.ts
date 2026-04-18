@@ -66,6 +66,9 @@ import { executeConversationsDisconnectShared } from "./commands/conversations/d
 import { executeConversationsBulkArchive } from "./commands/conversations/bulk-archive";
 import { executeConversationsBulkDelete } from "./commands/conversations/bulk-delete";
 import { executeConversationsBulkMove } from "./commands/conversations/bulk-move";
+import { executeConversationsList } from "./commands/conversations/list";
+import { executeConversationsInfo } from "./commands/conversations/info";
+import { executeConversationsMembers } from "./commands/conversations/members";
 import { executeRestrictAccessAddGroup } from "./commands/conversations/restrict-access/add-group";
 import { executeRestrictAccessListGroups } from "./commands/conversations/restrict-access/list-groups";
 import { executeRestrictAccessRemoveGroup } from "./commands/conversations/restrict-access/remove-group";
@@ -641,6 +644,26 @@ const conversationsCommands = command(
       })),
       conversationsRestrictAccessCommands,
       conversationsEkmCommands,
+      command("list", object({
+        cmd: constant("conversations-list" as const),
+        cursor: optional(option("--cursor", string({ metavar: "CURSOR" }))),
+        limit: optional(option("--limit", integer({ metavar: "LIMIT" }))),
+        types: optional(option("--types", string({ metavar: "TYPES" }))),
+        excludeArchived: optional(option("--exclude-archived", boolValueParser)),
+        teamId: optional(option("--team-id", string({ metavar: "TEAM_ID" }))),
+      })),
+      command("info", object({
+        cmd: constant("conversations-info" as const),
+        channel: option("--channel", string({ metavar: "CHANNEL_ID" })),
+        includeLocale: optional(option("--include-locale", boolValueParser)),
+        includeNumMembers: optional(option("--include-num-members", boolValueParser)),
+      })),
+      command("members", object({
+        cmd: constant("conversations-members" as const),
+        channel: option("--channel", string({ metavar: "CHANNEL_ID" })),
+        cursor: optional(option("--cursor", string({ metavar: "CURSOR" }))),
+        limit: optional(option("--limit", integer({ metavar: "LIMIT" }))),
+      })),
     ),
   ),
 );
@@ -1716,6 +1739,36 @@ switch (config.cmd) {
     const client = await createSlackClient(store, profileFlag);
     await executeConversationsRemoveCustomRetention(client, { channelId: config.channelId });
     console.log("Custom retention policy removed.");
+    break;
+  }
+  case "conversations-list": {
+    const client = await createSlackClient(store, profileFlag);
+    const channels = await executeConversationsList(client, {
+      cursor: config.cursor, limit: config.limit, types: config.types,
+      excludeArchived: config.excludeArchived, teamId: config.teamId,
+    });
+    const rows = channels.map((c: { id?: string; name?: string; is_private?: boolean; is_archived?: boolean }) => ({
+      id: c.id ?? "", name: c.name ?? "", is_private: c.is_private ?? false, is_archived: c.is_archived ?? false,
+    }));
+    console.log(formatOutput(rows, ["id", "name", "is_private", "is_archived"], outputFormat));
+    break;
+  }
+  case "conversations-info": {
+    const client = await createSlackClient(store, profileFlag);
+    const channel = await executeConversationsInfo(client, {
+      channel: config.channel,
+      includeLocale: config.includeLocale,
+      includeNumMembers: config.includeNumMembers,
+    });
+    console.log(JSON.stringify(channel, null, 2));
+    break;
+  }
+  case "conversations-members": {
+    const client = await createSlackClient(store, profileFlag);
+    const members = await executeConversationsMembers(client, {
+      channel: config.channel, cursor: config.cursor, limit: config.limit,
+    });
+    console.log(JSON.stringify(members, null, 2));
     break;
   }
   case "conversations-restrict-access-add-group": {
