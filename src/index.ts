@@ -36,6 +36,14 @@ import { executeUsersSessionResetBulk } from "./commands/users/session/reset-bul
 import { executeUsersSessionSetSettings } from "./commands/users/session/set-settings";
 import { executeUsersSetExpiration } from "./commands/users/set-expiration";
 import { executeUsersUnsupportedVersionsExport } from "./commands/users/unsupported-versions/export";
+import { executeUsersInfo } from "./commands/users/info";
+import { executeUsersLookupByEmail } from "./commands/users/lookup-by-email";
+import { executeUsersGetPresence } from "./commands/users/get-presence";
+import { executeUsersSetPresence } from "./commands/users/set-presence";
+import { executeUsersConversations } from "./commands/users/conversations";
+import { executeUsersIdentity } from "./commands/users/identity";
+import { executeUsersProfileGet } from "./commands/users/profile/get";
+import { executeUsersProfileSet } from "./commands/users/profile/set";
 
 import { executeConversationsArchive } from "./commands/conversations/archive";
 import { executeConversationsUnarchive } from "./commands/conversations/unarchive";
@@ -166,6 +174,18 @@ const discoverabilityValueParser: ValueParser<"sync", TeamDiscoverability> = {
     };
   },
   format(value: TeamDiscoverability): string {
+    return value;
+  },
+};
+
+const presenceValueParser: ValueParser<"sync", "auto" | "away"> = {
+  $mode: "sync",
+  metavar: "PRESENCE",
+  parse(input: string): ValueParserResult<"auto" | "away"> {
+    if (input === "auto" || input === "away") return { success: true, value: input };
+    return { success: false, error: [{ type: "text", text: "Must be 'auto' or 'away'." }] };
+  },
+  format(value: "auto" | "away"): string {
     return value;
   },
 };
@@ -315,6 +335,7 @@ const teamsCommands = command(
 const usersCommands = command(
   "users",
   or(
+    or(
     command("list", object({
       cmd: constant("users-list" as const),
       teamId: optional(option("--team-id", string({ metavar: "TEAM_ID" }))),
@@ -360,6 +381,7 @@ const usersCommands = command(
       teamId: option("--team-id", string({ metavar: "TEAM_ID" })),
       userId: option("--user-id", string({ metavar: "USER_ID" })),
     })),
+    ),
     command("session", or(
       command("reset", object({
         cmd: constant("users-session-reset" as const),
@@ -411,6 +433,50 @@ const usersCommands = command(
       dateEndOfSupport: optional(option("--date-end-of-support", integer({ metavar: "TIMESTAMP" }))),
       dateSessionsStarted: optional(option("--date-sessions-started", integer({ metavar: "TIMESTAMP" }))),
     }))),
+    or(
+      command("info", object({
+        cmd: constant("users-info" as const),
+        user: option("--user", string({ metavar: "USER_ID" })),
+        includeLocale: optional(option("--include-locale", boolValueParser)),
+      })),
+      command("lookup-by-email", object({
+        cmd: constant("users-lookup-by-email" as const),
+        email: option("--email", string({ metavar: "EMAIL" })),
+      })),
+      command("get-presence", object({
+        cmd: constant("users-get-presence" as const),
+        user: option("--user", string({ metavar: "USER_ID" })),
+      })),
+      command("set-presence", object({
+        cmd: constant("users-set-presence" as const),
+        presence: option("--presence", presenceValueParser),
+      })),
+      command("conversations", object({
+        cmd: constant("users-conversations" as const),
+        user: optional(option("--user", string({ metavar: "USER_ID" }))),
+        cursor: optional(option("--cursor", string({ metavar: "CURSOR" }))),
+        limit: optional(option("--limit", integer({ metavar: "LIMIT" }))),
+        types: optional(option("--types", string({ metavar: "TYPES" }))),
+        excludeArchived: optional(option("--exclude-archived", boolValueParser)),
+      })),
+      command("identity", object({
+        cmd: constant("users-identity" as const),
+      })),
+      command("profile", or(
+        command("get", object({
+          cmd: constant("users-profile-get" as const),
+          user: optional(option("--user", string({ metavar: "USER_ID" }))),
+          includeLabels: optional(option("--include-labels", boolValueParser)),
+        })),
+        command("set", object({
+          cmd: constant("users-profile-set" as const),
+          user: optional(option("--user", string({ metavar: "USER_ID" }))),
+          name: optional(option("--name", string({ metavar: "NAME" }))),
+          value: optional(option("--value", string({ metavar: "VALUE" }))),
+          profile: optional(option("--profile", string({ metavar: "JSON" }))),
+        })),
+      )),
+    ),
   ),
 );
 
@@ -1375,6 +1441,75 @@ switch (config.cmd) {
       dateSessionsStarted: config.dateSessionsStarted,
     });
     console.log("Unsupported versions export requested.");
+    break;
+  }
+  case "users-info": {
+    const client = await createSlackClient(store, profileFlag);
+    const user = await executeUsersInfo(client, { user: config.user, includeLocale: config.includeLocale });
+    console.log(JSON.stringify(user, null, 2));
+    break;
+  }
+  case "users-lookup-by-email": {
+    const client = await createSlackClient(store, profileFlag);
+    const user = await executeUsersLookupByEmail(client, { email: config.email });
+    console.log(JSON.stringify(user, null, 2));
+    break;
+  }
+  case "users-get-presence": {
+    const client = await createSlackClient(store, profileFlag);
+    const presence = await executeUsersGetPresence(client, { user: config.user });
+    console.log(JSON.stringify(presence, null, 2));
+    break;
+  }
+  case "users-set-presence": {
+    const client = await createSlackClient(store, profileFlag);
+    await executeUsersSetPresence(client, { presence: config.presence });
+    console.log(`Presence set to '${config.presence}'.`);
+    break;
+  }
+  case "users-conversations": {
+    const client = await createSlackClient(store, profileFlag);
+    const channels = await executeUsersConversations(client, {
+      user: config.user,
+      cursor: config.cursor,
+      limit: config.limit,
+      types: config.types,
+      excludeArchived: config.excludeArchived,
+    });
+    const rows = channels.map((c: { id?: string; name?: string; is_private?: boolean }) => ({
+      id: c.id ?? "", name: c.name ?? "", is_private: c.is_private ?? false,
+    }));
+    console.log(formatOutput(rows, ["id", "name", "is_private"], outputFormat));
+    break;
+  }
+  case "users-identity": {
+    const client = await createSlackClient(store, profileFlag);
+    const identity = await executeUsersIdentity(client, {});
+    console.log(JSON.stringify(identity, null, 2));
+    break;
+  }
+  case "users-profile-get": {
+    const client = await createSlackClient(store, profileFlag);
+    const profile = await executeUsersProfileGet(client, {
+      user: config.user,
+      includeLabels: config.includeLabels,
+    });
+    console.log(JSON.stringify(profile, null, 2));
+    break;
+  }
+  case "users-profile-set": {
+    const client = await createSlackClient(store, profileFlag);
+    let profileJson: Record<string, unknown> | undefined;
+    if (config.profile !== undefined) {
+      profileJson = JSON.parse(config.profile) as Record<string, unknown>;
+    }
+    await executeUsersProfileSet(client, {
+      user: config.user,
+      name: config.name,
+      value: config.value,
+      profile: profileJson,
+    });
+    console.log("Profile updated.");
     break;
   }
   case "conversations-archive": {
