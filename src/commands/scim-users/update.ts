@@ -20,7 +20,7 @@ export async function executeScimUsersUpdate(
 
   if (opts.active !== undefined) operations.push({ op: "replace", path: "active", value: opts.active });
   if (opts.userName !== undefined) operations.push({ op: "replace", path: "userName", value: opts.userName });
-  if (opts.email !== undefined) operations.push({ op: "replace", path: "emails", value: [{ value: opts.email, primary: true }] });
+  if (opts.email !== undefined) operations.push({ op: "replace", path: 'emails[primary eq true].value', value: opts.email });
   if (opts.givenName !== undefined) operations.push({ op: "replace", path: "name.givenName", value: opts.givenName });
   if (opts.familyName !== undefined) operations.push({ op: "replace", path: "name.familyName", value: opts.familyName });
   if (opts.displayName !== undefined) operations.push({ op: "replace", path: "displayName", value: opts.displayName });
