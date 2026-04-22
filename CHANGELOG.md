@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.5.1](https://github.com/yamitzky/slack-admin-cli/compare/sladm-cli-v0.5.0...sladm-cli-v0.5.1) (2026-04-22)
+
+
+### Bug Fixes
+
+* **scim-users:** use SCIM filter path when updating email ([#15](https://github.com/yamitzky/slack-admin-cli/issues/15)) ([6f9a16d](https://github.com/yamitzky/slack-admin-cli/commit/6f9a16d332d43d40123c02b8a90a4aec00d03773))
+
 ## [0.5.0](https://github.com/yamitzky/slack-admin-cli/compare/sladm-cli-v0.4.0...sladm-cli-v0.5.0) (2026-04-18)
 
 
